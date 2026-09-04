@@ -218,7 +218,9 @@ an hour.
 
 Rover-side environment must export `MACHINE_TYPE=JetRover_Mecanum` explicitly.
 Dependencies are tiered in [`requirements.txt`](requirements.txt);
-porting to other hardware is documented in [`docs/PORTING.md`](docs/PORTING.md).
+porting to other hardware is documented in [`docs/PORTING.md`](docs/PORTING.md);
+how the demo videos are recorded, synchronised and re-rendered is in
+[`docs/VIDEO_PRODUCTION.md`](docs/VIDEO_PRODUCTION.md).
 
 ---
 
@@ -229,7 +231,7 @@ porting to other hardware is documented in [`docs/PORTING.md`](docs/PORTING.md).
 | `code/planning/` | Task planning, LLM decision layer, offline simulation. Runs on the host |
 | `code/grasp/` | Grasping + navigation. Mostly executes **on the rover**; this is a synced copy |
 | `code/car/` | Rover-only files with no host copy: startup scripts, nav/EKF config, IMU debias, waypoints |
-| `code/demo_tools/` | rviz god-view, offline re-rendering from rosbag, screen capture, video repair |
+| `code/demo_tools/` | rviz god-view, offline re-rendering from rosbag, screen capture, video repair — method in [`docs/VIDEO_PRODUCTION.md`](docs/VIDEO_PRODUCTION.md) |
 | `code/demo_scripts/` | Multi-view composition, detection overlays, paper figures |
 | `code/ops/` | Startup + health-check script |
 | `run_data/` | Mission states, maps, planned paths, per-run logs |

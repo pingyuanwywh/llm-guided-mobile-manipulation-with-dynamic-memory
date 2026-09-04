@@ -59,7 +59,8 @@ bash ~/jetrover_up.sh           # 开工七步体检，不过就停，绝不动�
 雷达 → 导航栈 → 清旧点"固化成带判据的七步，省掉跑完一整趟才发现白跑。
 
 依赖分层见 [`requirements.txt`](requirements.txt)；换电脑 / 换车 / 换机器人见
-**[`docs/PORTING.md`](docs/PORTING.md)**。
+**[`docs/PORTING.md`](docs/PORTING.md)**；录像怎么录、多机位怎么对齐、上帝视角怎么离线重渲染见
+**[`docs/VIDEO_PRODUCTION.md`](docs/VIDEO_PRODUCTION.md)**。
 
 ---
 
@@ -90,7 +91,7 @@ bash ~/jetrover_up.sh           # 开工七步体检，不过就停，绝不动�
 |---|---|
 | `code/grasp/` | 抓取 + 导航主力。**绝大多数跑在车上**，本机这份是同步副本（整理时逐个 md5 比对过：53 个同名文件里 50 个与车上一致） |
 | `code/planning/` | 任务规划、LLM 决策、离线仿真。跑在本机 |
-| `code/demo_tools/` | rviz 上帝视角、离线重渲染、录屏、修片。跑在本机 |
+| `code/demo_tools/` | rviz 上帝视角、离线重渲染、录屏、修片。跑在本机。方法见 [`docs/VIDEO_PRODUCTION.md`](docs/VIDEO_PRODUCTION.md) |
 | `code/demo_scripts/` | 多视角合成、检测框叠加、论文定性图 |
 | `code/ops/` | 开工起栈脚本 |
 | `code/car/` | 只跑在车上、本机没有副本的那部分：起栈脚本、导航/EKF 配置、IMU 去偏、录好的航点 |
