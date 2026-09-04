@@ -1,178 +1,248 @@
-# JetRover 无人机—小车协同抓取系统
+# LLM-Guided Mobile Manipulation with Dynamic Memory
 
-无人机报出饮料罐坐标 → LLM 决定下一个动作 → 麦轮小车导航到罐子前的 standoff 点 →
-深度相机识别 + 机械臂抓取 → 送到垃圾站 → 循环。
+A mobile manipulator that clears drink cans from a room. An overhead drone reveals can
+coordinates a few at a time; a **local** LLM decides what to do next from a task memory that
+is rewritten after every attempt; a mecanum rover navigates to a standoff pose, grasps the can
+with a depth camera and a 5-DoF arm, and delivers it to a collection station. Then it does it
+again — replanning against whatever the drone has revealed by then.
 
-平台：JetRover 麦轮底盘（Jetson Nano，ROS Noetic）+ 深度相机 + 5 自由度机械臂 + RPLidar，
-本机 Ubuntu 20.04 跑规划、可视化和视频生产。
+**Best real-robot run: 5 / 5 cans, zero human intervention, 6 min 12 s.** 5/5 has been
+reproduced on several later runs, including one planned live in the order the drone revealed
+the cans.
 
-真机最好成绩：**五罐闭环 5/5 零干预，6 分 12 秒**（2026-08-08 夜，双站"窄门"布局）。
-后续多次复现 5/5，含一趟按无人机发现顺序动态规划的。
+> 中文版完整说明（更详细，含全部踩坑记录）见 **[README.zh.md](README.zh.md)**。
+
+![Qualitative sequence of a five-can run](figures/qualitative_0815_drone5/qualitative_sequence_0815_drone5.png)
+
+*One complete five-can run (2026-08-15). Each panel: ceiling camera (left), onboard RGB (top
+right), depth colormap (bottom right). This layout is `free` mode — five cans (four red, one
+green), two collection stations, and the LLM picks which station to use on each trip.
+(a) start, gripper facing the empty bin; (b)–(d) the first three cans entering the grasp sweet
+spot; (e) the green can; (f) the last can, with the coordinate-reporting drone visible at right.*
 
 ---
 
-## 一分钟跑起来
+## What is actually interesting here
 
-```bash
-cp jetrover_env.example ~/.jetrover_env && chmod 600 ~/.jetrover_env   # 填自己的车 IP
-bash code/ops/jetrover_up.sh          # 开工一键起栈 + 七步体检，不过就停，绝不动车
+Most of the engineering in this repo is not "we called an LLM". It is the boundary drawn
+around the LLM, and the fact that every constant in that boundary came from a measurement on
+the real robot.
+
+### 1. The LLM is structurally incapable of choosing a collision
+
+```
+  DETERMINISTIC LAYER              LLM LAYER                EXECUTION LAYER
+  (plan_next.py, upper half)       (lower half)             (on the rover, frozen)
+
+  synthesise standoff poses   ->   pick one candidate   ->   run_one_can.sh
+  geometric clearance gate         from those that           nav → approach → grasp → deliver
+  drop anything that fails         PASSED the gate
 ```
 
-`jetrover_up.sh` 是整个项目的入口，把"连车 → 抓取栈 → cmd_vel 桥接 → 只读体检 →
-雷达 → 导航栈 → 清旧点"固化成带判据的七步，省掉跑完一整趟才发现白跑。
+The LLM never emits a coordinate. It emits an **action name**, constrained to a JSON-schema
+`enum` that was built *after* the clearance gate ran. A leg that would sweep too close to
+another can is not a bad option the model might avoid — **it is not in the option list at all.**
+Worst case, the model picks a suboptimal route; it cannot pick a crash.
+
+Two measured reasons this had to be structural rather than prompt-based:
+
+- **`enum` guarantees vocabulary, not semantics** (observed 2026-07-01) — schema-constrained
+  decoding keeps the output parseable, not correct.
+- **`temperature=0` does not guarantee determinism** (observed 2026-07-08) — so no safety
+  property may rest on the model reproducing a previous answer.
+
+Why the cans need a geometric gate at all: they sit **below the lidar's scan plane**, so they
+never enter the costmap and the obstacle-avoidance stack does not know they exist. `move_base`
+will happily plan a path straight through one, and the rover will knock it flying. The gate is
+what supplies the obstacle knowledge the navigation stack structurally cannot have.
+
+### 2. Dynamic memory: the plan is rebuilt from state, not from a script
+
+`mission_state.yaml` is the single source of truth, re-read before every decision and rewritten
+after every attempt:
+
+```yaml
+cans:
+  can4:
+    x: 2.362
+    y: -1.436
+    color: red
+    source: drone        # who reported it
+    status: collected    # pending | collected | failed | stuck
+    attempts: 1          # drives the retry / give-up logic
+    seen_at: '15:00:12'  # when the drone revealed it
+    station: collect     # which station it went to
+robot: {x: -1.169, y: -1.136, holding: null, at: collect}
+active: null             # the leg in flight, if any
+```
+
+Because the state is data and not a program counter, three things fall out for free:
+
+- **Cans can appear mid-mission.** The drone feed reveals coordinates on a timer; a can that
+  shows up while the rover is already driving somewhere becomes a new candidate at the next
+  decision point.
+- **Failure is a first-class state.** `attempts` and `status: failed` feed back into the next
+  prompt as *"this target has failed N times"*, so the model can choose to move on. The rule
+  learned on the robot is **retry once unchanged, stop after two consecutive failures** — one
+  early run was lost by a human stopping a loop that would have succeeded on its own retry.
+- **Interruption is decidable, and bounded by physics.** A leg is split into
+  `--phase nav` (drive to the standoff pose **empty-handed**) and `--phase rest` (grasp and
+  deliver). Only `nav` is interruptible — there is no safe way to abandon a leg with a can
+  half-gripped. While a `nav` phase is in flight, a newly revealed can triggers one narrow
+  question, *should we abandon the current target?*, rather than a silent re-plan.
+
+### 3. Prompt decomposition, found by measurement
+
+The model is `qwen3:8b` served locally by ollama. It is small, and it fails in a specific,
+reproducible way: **ask it two questions in one JSON and it conflates them.**
+
+- Asking *"which can?"* and *"which station?"* together (2026-08-01): the model was handed both
+  stations' trip costs (4.60 vs 5.50), chose the expensive one, and **fabricated** a
+  justification — *"collect_b is closer"* — citing a number that was not in the candidate set.
+- Asking *"should I abort?"* inside the general planning prompt: the general rule *"prefer
+  smaller trip"* and the re-routing rule *"being closer is not a reason to switch"* directly
+  contradict each other, and the model reliably picks the easier rule — producing exactly the
+  banned behaviour.
+
+The fix is not a better prompt, it is **three separate single-question calls**:
+`should_abort()` → `ask_llm()` (which can) → `pick_station()` (which station). The abort prompt
+does not contain trip costs at all, so the contradiction cannot be constructed.
+
+A related trap, same class: when a leg is in flight, the actions `continue` and `can3` mean the
+same thing. The model then picks the more familiar-looking token and the decision degenerates
+into *"this is the current task, so continue."* The active can is therefore **removed** from the
+selectable list whenever `continue` is offered.
+
+### 4. Every safety constant is an experimental result
+
+| Constant | Value | Where it came from |
+|---|---|---|
+| `HARD` | 0.193 m | robot radius 0.16 + can radius 0.033 — geometric certain-collision line |
+| `WARN` | 0.50 m | raised from 0.30 after a leg with **0.48 m straight-line clearance knocked a can over** |
+| `CAN_AHEAD` | 0.45 m | can position = standoff + 0.45 m along approach yaw; calibrated by two 5/5 runs |
+| `SELF_MIN` | 0.30 m | a standoff on the far side of its own can made the approach drive **over** it (measured 0.039 m) |
+| TEB path deviation | ≤ 0.166 m | measured deviation of the executed trajectory from the global plan |
+
+The straight-line clearance model that these thresholds originally used was itself audited
+against the planner: over 450 paired samples it **overestimates clearance on 56% of legs**,
+P90 +0.18 m, worst case +0.35 m. Twelve legs were "safe" by straight line while the real path
+entered the warning band. Hence `plan_clearance.py`, which asks `move_base/make_plan` for the
+**actual** global path and measures against that. The straight-line model is still used for
+offline simulation — and is explicitly **not** treated as evidence of real-robot safety.
 
 ---
 
-## 系统怎么跑
+## Pipeline
 
 ```
-无人机 / drone_sim.py            [本机]  逐条报出罐子 x/y
+drone / drone_sim.py             [host]   reveals can x/y over time
         ↓ drone_feed.jsonl
-   plan_next.py                  [本机]  读任务记忆 → 造候选 → LLM 挑下一个动作
-        ↓ 只输出动作名，绝不输出坐标（分层安全边界）
-   mission_run.py                [本机]  主循环，ssh 驱动车执行 + 回写记忆
+   plan_next.py                  [host]   read memory → build candidates → clearance gate → LLM
+        ↓ action name only, never a coordinate
+   mission_run.py                [host]   main loop: drive the rover over ssh, write memory back
         ↓ ssh
-   nav_goto.py → rotate_to.py    [车上]  rotate-then-go 导航到 standoff 点
+   nav_goto.py → rotate_to.py    [rover]  rotate-then-go navigation to the standoff pose
         ↓
-   approach.py                   [车上]  纯平移把罐子送进抓取甜点区
+   approach.py                   [rover]  pure translation to bring the can into the sweet spot
         ↓
-   final_track_and_grab_y0.py    [车上]  深度相机识别 + IK + 夹爪，抓起来送站
+   final_track_and_grab_y0.py    [rover]  depth detection + IK + gripper, then deliver
 ```
 
-安全层不在 LLM 里：`plan_clearance.py` 向 `move_base` 要**真实全局路径**，
-算这条腿会不会从别的罐子旁边太近掠过（罐子矮，雷达扫不到，costmap 里根本没有它们）。
+---
+
+## Platform
+
+| | |
+|---|---|
+| Rover | Hiwonder JetRover, mecanum base, Jetson Nano, ROS Noetic |
+| Sensing | Orbbec depth camera (on the arm), RPLidar |
+| Arm | 5-DoF with parallel gripper |
+| Mapping / nav | hector SLAM + `move_base` with **TEB** local planner and mecanum lateral motion |
+| LLM | `qwen3:8b` via local ollama, `temperature=0`, JSON-schema constrained. **No cloud, no API key.** |
+| Host | Ubuntu 20.04 — planning, rviz god-view, offline re-rendering, video production |
+
+Switching the local planner from DWA to TEB with holonomic motion was itself measured:
+**−89% yaw wobble, 5× faster legs, zero sign changes on large turns, obstacle detours 43 s → 10 s**,
+and TEB recovered in 9.3 s from a pose where DWA deadlocked against an obstacle.
 
 ---
 
-## 目录
-
-| 路径 | 内容 |
-|---|---|
-| `code/grasp/` | 抓取 + 导航主力。**绝大多数跑在车上**，本机这份是同步副本（整理时逐个 md5 比对过：53 个同名文件里 50 个与车上一致） |
-| `code/planning/` | 任务规划、LLM 决策、离线仿真。跑在本机 |
-| `code/demo_tools/` | rviz 上帝视角、离线重渲染、录屏、修片。跑在本机 |
-| `code/demo_scripts/` | 多视角合成、检测框叠加、论文定性图 |
-| `code/ops/` | 开工起栈脚本 |
-| `code/car/` | 只跑在车上、本机没有副本的那部分：起栈脚本、导航/EKF 配置、IMU 去偏、录好的航点 |
-| `run_data/` | 任务状态 yaml、地图 pgm、路径 jsonl、每趟的日志 |
-| `figures/` | 论文定性序列图 + 排查对比图 |
-| `deliverables/` | 作品集 HTML、teaser deck |
-
----
-
-## 文件索引：按复用价值分层
-
-### ⭐ 一等：换个机器人也用得上的方法
-
-这一层是最值得回头读的——解决的是**通用问题**，不绑这台车。
-
-| 文件 | 位置 | 解决什么问题 |
-|---|---|---|
-| `car/imu_debias.py` | 车上 | IMU 零偏在线估计后再喂 EKF。零偏会温漂（15 分钟变 15%），**必须每次现测，不能硬编码**——这条结论比代码值钱 |
-| `car/cmd_odom.py` | 车上 | 把"指令速度"当一路里程计喂 EKF。没有轮式里程计时的补位方案 |
-| `grasp/rotate_to.py` | 车上 | 用 TF 反馈原地转到目标 yaw。破 DWA 掉头摆死的病根 |
-| `grasp/plan_clearance.py` | 车上 | 向 `move_base/make_plan` 要**真实**路径算净空。直线模型会高估 56%、最大差 0.35m，别拿直线当安全依据 |
-| `grasp/collect_paths.py` | 车上 | 批量存 make_plan 整条折线（132 条腿 3.3 秒，车不动），离线分析的数据源 |
-| `grasp/scan_probe.py` | 车上 | 发运动指令**之前**先看一眼车周围有什么。廉价的事前拦截 |
-| `demo_tools/demo_markers.py` + `pub_map.py` | 本机 | 录了 rosbag 就能**事后**把罐子/站/几何门状态叠进 rviz 重渲染，不用重拍 |
-| `demo_tools/fix_truncated_mp4.py` | 本机 | 修硬掉电截断的 H.264 mp4（缺 moov）。从好文件取 SPS/PPS、mdat 转 Annex-B 重封装，实测 10333 帧全回来 |
-| `planning/plan_next.py` | 本机 | LLM 决策的**分层安全边界**设计：LLM 只输出动作名，永不输出坐标。694 行，含 prompt 工程的踩坑注释 |
-
-### 二等：本项目主线（要复现这套系统就靠它们）
-
-| 文件 | 位置 | 作用 |
-|---|---|---|
-| `planning/mission_run.py` | 本机 | 主循环：收坐标 → 叫 LLM → 驱动车收一个罐子 → 回写记忆。456 行，支持 `--interruptible` / `--record` / `--dry-run` |
-| `grasp/approach.py` | 车上 | 逼近环：导航到位后用纯平移把罐子送进甜点区。434 行 |
-| `grasp/final_track_and_grab_y0.py` | 车上 | 抓取执行主体。754 行，**派生自幻尔厂商出厂例程**（原版不随本仓库分发，见 `NOTICE.md`） |
-| `grasp/nav_goto.py` | 车上 | rotate-then-go 导航封装 |
-| `grasp/set_place.py` / `record_point.py` / `record_place_once.py` | 车上 | 录点 / 写点到 `llm_nav_places.yaml`。落盘后**回读确认**（静默失败 + 乐观提示是最坏组合） |
-| `grasp/teach_place.py` | 车上 | 手把手教"投篮"放置姿势 |
-| `grasp/grab_depth.py` | 车上 | 纯深度凸起抓取（不看颜色）：RANSAC 拟合桌面 → 桌面以上连通块 = 物体。**夜间户外罐子没色度时的备胎路线** |
-| `ops/jetrover_up.sh` | 本机 | 开工七步体检 |
-
-### 三等：诊断与测量工具（一次性用途，但方法学最该学）
-
-这一组是"**别死磕调参，先把现象量出来**"的产物。每个都在回答一个具体的物理问题。
-
-| 文件 | 回答什么问题 |
-|---|---|
-| `grasp/drift_check.py` | 原地旋转到底会不会让 hector 的位置估计滑移？（⚠️**它会让车原地转一圈**，跑之前想清楚） |
-| `grasp/wobble_check.py` | 导航时车头"一扭一扭"到底有多扭？（量变号次数，带死区免得把噪声算成扭） |
-| `grasp/yaw_check.py` | "车头朝向"这一维到底有多脏？ |
-| `grasp/straight_scaling.py` | 直行偏航是"按米累积"还是"每次起停固定踢一下"？→ 结论：**不存在"每米歪多少"，别去标定电机** |
-| `grasp/drive_check.py` | 直行时"扭"的三个候选病因，分开验 |
-| `grasp/obstacle_check.py` | 同一场地同一目标，换规划器跑两遍做对照 → TEB 换掉 DWA 的依据 |
-| `grasp/odom_drytest.py` | 干测 cmd_odom → EKF 的位移通路 |
-| `grasp/path_deviation.py` | TEB 实际轨迹偏离全局路径多少？→ 实测最大 0.166m，告警线 0.50 才有余量 |
-| `grasp/capture_one.py` / `jitter_check.py` | 摆好罐子后先验检测：ROI 框住的到底是不是罐子、框心跳不跳。**录点成功 ≠ 抓得住** |
-| `grasp/analyze_scene2.py` | 离线设计深度凸起抓取（RANSAC 平面分割），配 `scene_*.npy` 样本数据可直接跑 |
-| `grasp/read_servos.py` / `check_place_row.py` / `probe_place.py` | 只读体检：舵机位置、落点 IK 可达性 |
-| `planning/clearance_scan.py` | 跑前全布局净空扫描 |
-| `planning/mission_sim.py` | 离线回放真实坐标，造几种局面测 `plan_next.py`（不用开车） |
-| `planning/scene_search.py` / `two_station_gap.py` | 搜"能让贪心吃亏"的布局 / 算加第二个站带来多大优化空间 |
-| `planning/mission_review.py` | 跑完复盘 |
-
-### 四等：Demo 生产线
-
-| 文件 | 作用 |
-|---|---|
-| `grasp/record_cam.py` | 车上录 RGB + 深度伪彩成视频（H.264 直出） |
-| `demo_tools/start_rviz_virtual.sh` | rviz 关进 Xvfb 虚拟屏再录，桌面窗口盖不上去 |
-| `demo_tools/rec_rviz.sh` | 录屏 |
-| `demo_tools/replay_*.sh` + `render_*_rviz_dynamic.sh` | 离线重放 bag + 重渲染上帝视角（每趟一份） |
-| `demo_scripts/compose/make_*view_*.sh` | 多视角合成（五宫格 / 六宫格） |
-| `demo_scripts/overlays/` | 无人机检测框叠加 |
-| `demo_scripts/figures/` | 论文定性序列图 |
-| `demo_tools/*.rviz` | rviz 布局。⚠️`Scale` 就是 px/m，**每换一张地图必须重设 X/Y/Scale**；历次拍摄的旧布局在 `rviz_archive/` |
-
-### 五等：归档，别删但也别当主力
-
-- `grasp/colleague_final_grab/` — 围绕厂商例程的启动封装、中文使用说明、现场标定的颜色阈值（**厂商源码本身不在这里**，见 `NOTICE.md`）
-- `grasp/*.bak_*` — 早于 git 的历史版本，git 恢复不了，所以留着
-- `demo_scripts/archive/`、`demo_tools/rviz_archive/` — 旧版本
-
----
-
-## 环境与配置
-
-车 IP / 本机 IP 全部走 `~/.jetrover_env`（不进 git）：
+## Getting started
 
 ```bash
-cp jetrover_env.example ~/.jetrover_env && chmod 600 ~/.jetrover_env
+cp jetrover_env.example ~/.jetrover_env && chmod 600 ~/.jetrover_env   # put your rover's IP here
+bash code/ops/jetrover_up.sh
 ```
 
-DHCP 换了 IP 只改这一个文件。命令行临时覆盖仍然优先：`CAR_IP=10.0.0.5 bash code/ops/jetrover_up.sh`。
+`jetrover_up.sh` is the entry point. It turns "connect → grasp stack → cmd_vel bridge →
+read-only health check → lidar → navigation stack → clear stale waypoints" into seven steps,
+**each with a pass/fail criterion, halting on the first failure.** It never commands the rover
+to move. This exists because the alternative — discovering a broken link after driving a full
+five-can run — costs a battery and an hour.
 
-车上必须显式 `export MACHINE_TYPE=JetRover_Mecanum`，否则底盘类型认错。
+Rover-side environment must export `MACHINE_TYPE=JetRover_Mecanum` explicitly.
 
 ---
 
-## 车上代码的边界
+## Repository layout
 
-`code/car/` 里是**只跑在车上、本机没有副本**的那部分（已拉回，15 个文件）：
-
-| 文件 | 作用 |
+| Path | Contents |
 |---|---|
-| `align_check.py` | 在线漂移体检：scan-to-map 对齐。判据"中位 > 0.05m 就停"。**只读，不动车** |
-| `standoff_wall_check.py` | 量 standoff 点离墙多远。< 0.35m 必须换摆位，重试救不回来 |
-| `imu_debias.py` / `imu_bias.yaml` | IMU 零偏在线估计。零偏温漂，必须每次现测 |
-| `cmd_odom.py` / `ekf.yaml` | 指令速度当里程计喂 EKF（这车没有轮式里程计） |
-| `cmd_vel_to_motor.py` | `/cmd_vel` → 麦轮电机。导航栈的最后一环 |
-| `llm_nav_commander.py` | 车上侧的导航命令接收端 |
-| `nav_teb_holo.launch` | **现行导航配置**：TEB + 麦轮横移。换掉 DWA 的那一版 |
-| `nav_hector_bfc.launch` | 建图配置。⚠️`map_update_angle_thresh=0.06`（转 3.4° 就重写地图，上游默认 51°），怀疑是"炸图"的雪崩放大器，**未验证** |
-| `nav_hector_ekf.launch` | hector + EKF 版。⚠️默认 `use_teb=false`，直接用会退回 DWA |
-| `start_board.sh` / `start_lidar.sh` / `start_nav.sh` | 起栈脚本，被 `ops/jetrover_up.sh` 通过 ssh 调用 |
-| `llm_nav_places.yaml` | 录好的航点（standoff 点 + 垃圾站） |
+| `code/planning/` | Task planning, LLM decision layer, offline simulation. Runs on the host |
+| `code/grasp/` | Grasping + navigation. Mostly executes **on the rover**; this is a synced copy |
+| `code/car/` | Rover-only files with no host copy: startup scripts, nav/EKF config, IMU debias, waypoints |
+| `code/demo_tools/` | rviz god-view, offline re-rendering from rosbag, screen capture, video repair |
+| `code/demo_scripts/` | Multi-view composition, detection overlays, paper figures |
+| `code/ops/` | Startup + health-check script |
+| `run_data/` | Mission states, maps, planned paths, per-run logs |
+| `figures/` | Qualitative sequences and diagnostic comparisons |
+| `deliverables/` | Portfolio page, teaser deck |
 
-**故意没拉的**：`ros_car/`、`ros1_ws/`、`JetRover-Jetson_nano_ros1/ros_ws/` 三个 ROS
-工作区。里面绝大部分是幻尔出厂包和第三方开源包，不是本项目产出，见 `NOTICE.md`。
+`README.zh.md` carries a **file-by-file index ranked by reuse value** — which files transfer to
+a different robot, which are project-specific, and which are one-shot diagnostics.
+
+### Things here that transfer to other robots
+
+- `grasp/plan_clearance.py` — ask the planner for the real path before trusting a clearance number
+- `grasp/rotate_to.py` — closed-loop in-place rotation on TF feedback; cures DWA turn-around deadlock
+- `car/imu_debias.py` — online gyro bias estimation. Bias drifts with temperature (**15% in 15 min**),
+  so it must be measured every session and can never be hard-coded
+- `car/cmd_odom.py` — treat commanded velocity as an odometry source when there are no wheel encoders
+- `demo_tools/demo_markers.py` + `pub_map.py` — overlay task state onto rviz **after** the fact from
+  a rosbag, so a demo video does not require a re-shoot
+- `demo_tools/fix_truncated_mp4.py` — rebuild an H.264 MP4 that lost its `moov` atom to a power cut
+  (recovered 10 333 frames from a truncated recording)
+- `planning/plan_next.py` — the layered safety boundary and the prompt-decomposition notes above
 
 ---
 
-## 许可
+## Honest limitations
 
-本仓库自有代码按 MIT 发布（见 `LICENSE`）。
-`final_track_and_grab_y0.py` 派生自幻尔 JetRover 出厂例程，厂商原版不随本仓库分发——
-第三方代码与数据的完整说明见 **`NOTICE.md`**。
+- **Localisation is the weak point, not grasping.** Across every failed run in the log, grasping
+  was near-perfect and the failures were SLAM map corruption or hardware. hector SLAM
+  scan-matching diverges in feature-poor spaces (an open outdoor area) or when large geometry
+  moves (a lift door opening). The intended fix — build the map once, then run `map_server` +
+  AMCL so localisation can never write back into the map — is designed and the packages are on
+  the rover, but **it has not been run yet.**
+- **The LLM has not been shown to beat greedy.** On a real layout with real clearances, its
+  output matched an online greedy baseline token-for-token (4/4 reproductions, 16.74 m vs 16.08 m
+  optimal), and its own `reason` field admitted it was minimising trip length. The cause is
+  identified: the greedy rule is written into the system prompt. This is a known open item, not
+  a result being claimed.
+- **Single-station layouts have no optimisation headroom at all** — total distance is
+  order-independent by construction. Two stations are required before planning quality is even
+  measurable.
+- **Placement is open-loop.** Grasp success is verified by gripper closure width; release is not
+  verified at all. Drop-point error has a median of 10.1 cm, and one failure missed the bin by
+  5 mm more than the next-worst success.
+
+---
+
+## License
+
+Own code is MIT — see [`LICENSE`](LICENSE).
+
+`code/grasp/final_track_and_grab_y0.py` is **derived from** a Hiwonder JetRover factory example.
+The vendor original is **not redistributed here**. See [`NOTICE.md`](NOTICE.md) for the full
+third-party attribution, including the ROS packages used and the privacy scrubbing applied to
+the run logs.
