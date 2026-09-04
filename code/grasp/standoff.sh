@@ -34,7 +34,7 @@ import os, math, yaml
 f = os.path.expanduser('~/llm_nav_places.yaml')
 d = (yaml.safe_load(open(f)) or {}).get('places', {}) if os.path.exists(f) else {}
 print('已录 %d 个: %s' % (len(d), ', '.join(sorted(d)) or '(空)'))
-need = ['can1','can2','can3','can4','can5']
+need = ['can%d' % i for i in range(1, int(os.environ.get('N_CANS', 5)) + 1)]
 need += ['collect_a','collect_b'] if os.environ.get('TWO_STATION') else ['collect']
 miss = [n for n in need if n not in d]
 print('还差: ' + (', '.join(miss) if miss else '无, %d 个点齐了' % len(need)))

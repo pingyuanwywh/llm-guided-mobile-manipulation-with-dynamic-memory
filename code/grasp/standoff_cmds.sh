@@ -20,6 +20,7 @@ can2()    { bash $_S can2 "${1:-red}"; }
 can3()    { bash $_S can3 "${1:-red}"; }
 can4()    { bash $_S can4 "${1:-red}"; }
 can5()    { bash $_S can5 "${1:-red}"; }
+can6()    { bash $_S can6 "${1:-red}"; }
 collect()   { bash $_S collect;   }   # 单站时用
 collect_a() { bash $_S collect_a; }   # 双站: A 站
 collect_b() { bash $_S collect_b; }   # 双站: B 站
@@ -43,7 +44,7 @@ for k in sorted(d):
     print('  %-10s x=%+.3f y=%+.3f yaw=%+.0f deg'
           % (k, v.get('x', 0), v.get('y', 0), math.degrees(v.get('yaw', 0))))
 import os as _os
-need = ['can1', 'can2', 'can3', 'can4', 'can5']
+need = ['can%d' % i for i in range(1, int(os.environ.get('N_CANS', 5)) + 1)]
 need += ['collect_a', 'collect_b'] if _os.environ.get('TWO_STATION') else ['collect']
 miss = [n for n in need if n not in d]
 print('还差: ' + (', '.join(miss) if miss else '无, 六个点齐了'))
@@ -68,7 +69,7 @@ PY
 h() {
   cat <<'EOF'
   tel                                开键盘遥控 (w前 s后 a左 d右 x停 q退出)
-  can1 .. can5                       录点(默认按红罐): 逼近对准 -> 退8cm -> 落盘 -> 回读
+  can1 .. can6                       录点(默认按红罐): 逼近对准 -> 退8cm -> 落盘 -> 回读
   can3 green                         这个位置摆的是绿罐, 就跟一个 green
   collect                            录收集点(单站, 不看颜色)
   collect_a / collect_b              录两个收集站(双站, 不看颜色)

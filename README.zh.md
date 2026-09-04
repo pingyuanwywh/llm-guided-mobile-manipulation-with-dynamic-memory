@@ -19,15 +19,47 @@
 
 ---
 
-## 一分钟跑起来
+## 跑起来
+
+### 没有车也能试（五分钟）
+
+规划 + LLM 决策层**只依赖 PyYAML**，不用 ROS、不用硬件：
+
+```bash
+pip install PyYAML
+ollama pull qwen3:8b            # 本地模型，这个项目里没有云、没有 API key
+cd code/planning
+
+python3 plan_next.py --state ../../run_data/mission_state_0816a.yaml --no-llm   # 只跑几何门
+python3 plan_next.py --state ../../run_data/mission_state_0816a.yaml           # 几何门 + LLM
+```
+
+那个 state 是真实录的布局。预期输出：五个罐子里**只有 can3 过得了几何门**，另外四个
+会被报成"被 can3 挡住"并给出净空。然后那四个**根本不会出现在给 LLM 的 enum 里**——
+分层安全边界那条性质，一条命令就能看到。
+
+`mission_sim.py` 更进一步：拿真实录的坐标回放几种局面，车全程不用开机。
+
+### 上真机
+
+⚠️ **这个仓库是归档，不是装好的包。** 目录分层是**为了读**，所有脚本互相调用写的都是
+`~/foo.py`，所以 clone 完什么都跑不起来，必须先把文件铺回家目录：
 
 ```bash
 cp jetrover_env.example ~/.jetrover_env && chmod 600 ~/.jetrover_env   # 填自己的车 IP
-bash code/ops/jetrover_up.sh          # 开工一键起栈 + 七步体检，不过就停，绝不动车
+bash tools/deploy.sh            # 演练：只打印会写哪些文件，不落盘
+bash tools/deploy.sh --apply    # 真铺到本机 ~/ 和车上 ~/
+bash ~/jetrover_up.sh           # 开工七步体检，不过就停，绝不动车
 ```
 
-`jetrover_up.sh` 是整个项目的入口，把"连车 → 抓取栈 → cmd_vel 桥接 → 只读体检 →
+`deploy.sh` 覆盖前一律备份；**默认不铺现场标定**（航点、IMU 零偏必须重测，不是能拷贝的东西）；
+而且**车上文件比仓库新时会直接停下**，并打印把它拉回仓库的命令——车才是车上代码的真值来源。
+
+`jetrover_up.sh` 把"连车 → 抓取栈 → cmd_vel 桥接 → 只读体检 →
 雷达 → 导航栈 → 清旧点"固化成带判据的七步，省掉跑完一整趟才发现白跑。
+
+依赖分层见 [`requirements.txt`](requirements.txt)；换电脑 / 换车 / 换机器人见
+**[`docs/PORTING.md`](docs/PORTING.md)**。
 
 ---
 

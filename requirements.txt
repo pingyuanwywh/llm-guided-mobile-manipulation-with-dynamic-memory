@@ -1,0 +1,35 @@
+# 依赖分三层, 按你要跑哪一层装 —— 不要无脑全装。
+# 每一层都是从代码里 import 实际扫出来的, 不是照着记忆写的。
+#
+#   pip install -r requirements.txt                  # 只装第 1 层(规划 + LLM)
+#   pip install -r requirements.txt[demo]  <- 不支持, 见下面注释里的显式命令
+#
+# ============================================================
+# 第 1 层: 规划 + LLM 决策 + 离线仿真   [跑在本机, 不需要 ROS]
+# ============================================================
+# 这一层就是 code/planning/ 全部内容: plan_next.py(几何安全门 + LLM 决策)、
+# mission_run.py(主循环)、mission_sim.py(离线仿真)、scene_search.py 等。
+# mission_run 全靠 ssh 驱动车, 所以本机**不用装 ROS**。
+PyYAML>=5.3
+
+# 另外需要(不是 pip 装的):
+#   - ollama, 并 `ollama pull qwen3:8b`   —— 本地跑, 没有云、没有 API key
+#   - ssh 免密到车                          —— ssh-copy-id uavg@<车IP>
+
+# ============================================================
+# 第 2 层: demo 生产线(上帝视角重渲染 / 出图 / 合成) [跑在本机]
+# ============================================================
+#   pip install numpy Pillow matplotlib
+# 外加 ROS Noetic(apt 装, 不走 pip): rospy / rosbag / tf2_ros / rviz
+#   sudo apt install ros-noetic-desktop-full
+# 以及 ffmpeg(合成/修片)、xvfb(start_rviz_virtual.sh 把 rviz 关进虚拟屏再录)
+#   sudo apt install ffmpeg xvfb
+
+# ============================================================
+# 第 3 层: 车上(抓取 + 导航)   [跑在 Jetson Nano, 不在本机]
+# ============================================================
+#   numpy scipy opencv-python Pillow matplotlib
+# 外加 ROS Noetic + 幻尔出厂 ROS 包, 这些**随 JetRover 系统镜像出厂就有**, 不用自己装:
+#   hiwonder_sdk / hiwonder_kinematics / hiwonder_interfaces / ros_robot_controller
+#   以及导航侧: move_base / hector_mapping / teb_local_planner / rplidar_ros / OrbbecSDK_ROS1
+# ⚠️ 这一层换成非 JetRover 机器人就用不了了 —— 见 docs/PORTING.md

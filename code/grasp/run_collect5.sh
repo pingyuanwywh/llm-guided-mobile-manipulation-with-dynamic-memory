@@ -47,9 +47,9 @@ run_can () {
   fi
 }
 
-run_can can1 green
+run_can can1 red
+run_can can3 green
+run_can can5 red
 run_can can2 red
 run_can can4 red
-run_can can3 red
-run_can can5 red
 echo "===================== ALL DONE  $(date +%H:%M:%S) ====================="

@@ -169,18 +169,56 @@ and TEB recovered in 9.3 s from a pose where DWA deadlocked against an obstacle.
 
 ## Getting started
 
+### Try the decision layer with no robot at all
+
+The planning and LLM layer depends on **`PyYAML` and nothing else** — no ROS, no hardware.
+It is worth five minutes even if you never touch a JetRover:
+
 ```bash
-cp jetrover_env.example ~/.jetrover_env && chmod 600 ~/.jetrover_env   # put your rover's IP here
-bash code/ops/jetrover_up.sh
+pip install PyYAML
+ollama pull qwen3:8b                       # local model; there is no cloud in this project
+cd code/planning
+
+# deterministic geometric gate only
+python3 plan_next.py --state ../../run_data/mission_state_0816a.yaml --no-llm
+# gate + LLM
+python3 plan_next.py --state ../../run_data/mission_state_0816a.yaml
 ```
 
-`jetrover_up.sh` is the entry point. It turns "connect → grasp stack → cmd_vel bridge →
-read-only health check → lidar → navigation stack → clear stale waypoints" into seven steps,
-**each with a pass/fail criterion, halting on the first failure.** It never commands the rover
-to move. This exists because the alternative — discovering a broken link after driving a full
-five-can run — costs a battery and an hour.
+That state file is a real recorded layout. Expected output: of five cans, **only `can3` passes
+the gate** — the other four are reported blocked by `can3` with their clearances. Those four are
+then absent from the `enum` the LLM is given. This is the safety property in the introduction,
+executable in one command.
+
+`mission_sim.py` goes further and replays real recorded coordinates through several contrived
+situations, still with the robot powered off.
+
+### On real hardware
+
+⚠️ **This repository is an archive, not an installed package.** The directory layout exists so
+the code can be *read*; every script calls its neighbours as `~/foo.py`. A fresh clone runs
+nothing until the files are laid back out:
+
+```bash
+cp jetrover_env.example ~/.jetrover_env && chmod 600 ~/.jetrover_env   # your rover's IP
+bash tools/deploy.sh            # dry run: prints exactly what it would write, touches nothing
+bash tools/deploy.sh --apply    # lay files out into host ~/ and rover ~/
+bash ~/jetrover_up.sh           # seven-step preflight
+```
+
+`deploy.sh` backs up anything it overwrites, skips site calibration by default (waypoints and
+IMU bias must be re-measured, never copied), and **refuses to overwrite a rover file that is
+newer than the repo's copy** — the rover is the source of truth for rover-side code.
+
+`jetrover_up.sh` turns "connect → grasp stack → cmd_vel bridge → read-only health check → lidar →
+navigation stack → clear stale waypoints" into seven steps, **each with a pass/fail criterion,
+halting on the first failure.** It never commands the rover to move. It exists because the
+alternative — discovering a broken link after driving a full five-can run — costs a battery and
+an hour.
 
 Rover-side environment must export `MACHINE_TYPE=JetRover_Mecanum` explicitly.
+Dependencies are tiered in [`requirements.txt`](requirements.txt);
+porting to other hardware is documented in [`docs/PORTING.md`](docs/PORTING.md).
 
 ---
 

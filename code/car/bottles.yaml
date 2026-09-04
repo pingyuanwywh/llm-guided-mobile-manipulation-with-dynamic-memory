@@ -1,0 +1,28 @@
+# 由 bottle_run.py 落盘:无人机探测到的瓶子清单 + 本次任务去过的点
+task: "把所有瓶子都巡一遍"
+bottles:
+  - id: b1
+    type: "可乐"
+    x: 0.9900
+    y: 0.3352
+    visited: true
+  - id: b2
+    type: "矿泉水"
+    x: 0.5315
+    y: 1.9941
+    visited: true
+  - id: b3
+    type: "可乐"
+    x: 0.3587
+    y: 3.2175
+    visited: true
+  - id: b4
+    type: "矿泉水"
+    x: 0.6949
+    y: 4.9700
+    visited: true
+  - id: b5
+    type: "可乐"
+    x: 1.3484
+    y: 6.4926
+    visited: true
