@@ -163,13 +163,19 @@ Recorded because each one cost a run:
 
 - **Do not trust `--dry-run` to leave state alone.** `mission_run.py --dry-run` writes mission
   state. Reset everything to `pending` before a real run.
-- **Do not take an offline dry run as evidence that a route is safe.** Offline,
-  `REAL_CLEARANCE` is `None` and the gate falls back to the straight-line model. One dry run
-  reported a clean 5/5 while the real planned path on one leg came within **0.207 m** of a can.
-  The gate itself is not the problem — the straight-line stand-in is. Only a run that can reach
-  `move_base/make_plan` produces a clearance number worth trusting.
-  (`--order` skips the *LLM*, not the gate: it still calls `plan_candidates()` and halts the
-  mission if the next can in the fixed order fails, rather than driving through it.)
+- **Give a fixed order if you must, but never pin the station with it.**
+  `--order can4,can5` is safe: the gate still runs and the mission halts if the next can fails
+  it. `--order can4:collect_b` is **not**. Clearance is measured over *both* the outbound leg
+  and the return leg to the station, so a clearance number is only valid for the station it was
+  computed against. The code gates the can against the *system's* station choice and then
+  substitutes yours — leaving the return leg ungated. Measured: the gate approved
+  `can2 → collect_a` at 5.36 m; forcing `can2:collect_b` produced a real clearance of
+  **0.207 m** against a 0.193 m certain-collision line, and the dry run still reported 5/5.
+  Let the system assign stations; that is the half of the problem it is there to optimise.
+- **Do not take an offline dry run as evidence that a route is safe.** With no connection to
+  `move_base`, `REAL_CLEARANCE` is `None` and the gate **silently** falls back to the
+  straight-line model, printing a single `!!` line. Offline results tell you the logic is sound,
+  never that a route is clear.
 - **Do not treat `temperature=0` as reproducible**, and do not treat a JSON-schema `enum` as a
   semantic guarantee. Both were tested; both fail. This is why the gate runs *before* the enum
   is built, not after.
