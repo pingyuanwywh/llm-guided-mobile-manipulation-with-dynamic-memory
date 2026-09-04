@@ -1,0 +1,292 @@
++ bash ~/rec.sh start 0827b_drone5
++ setsid nohup python3 -u ~/record_cam.py --tag 0827b_drone5 > ~/Log/rec.log 2>&1 &
+[INFO] [1787819463.199529]: set_ldp(False) -> True
+[INFO] [1787819463.202222]: 等第一帧 /depth_cam/rgb/image_raw / /depth_cam/depth/image_raw ...
+[REC] 首帧深度有效率 91.0%
+[INFO] [1787819463.352347]: 录制中 -> /home/uavg/demo_videos/20260827_163103_0827b_drone5 (640x360 @ 15 fps, h264)
+[REC] /home/uavg/demo_videos/20260827_163103_0827b_drone5_rgb.mp4
+[REC] /home/uavg/demo_videos/20260827_163103_0827b_drone5_depth.mp4
++ rosbag record 0827b_drone5
+14610 bash -c mkdir -p ~/bags && tmux kill-session -t bag 2>/dev/null; tmux new-session -d -s bag 'source /opt/ros/noetic/setup.bash && rosbag record -O ~/bags/0827b_drone5.bag /tf /tf_static /scan /cmd_vel /move_base/NavfnROS/plan /move_base/TebLocalPlannerROS/local_plan /move_base/TebLocalPlannerROS/global_plan /move_base/current_goal /move_base/global_costmap/footprint'; sleep 3; pgrep -af 'rosbag record -O' | head -1
+=== 任务开始  模式=free  站=['collect_a', 'collect_b']  真车 uavg@<CAR_IP> ===
+    告警线 0.50m / 必撞线 0.193m   净空来源: move_base 真实路径
+   ⛔ can1 暂时去不了(净空 0.01, 被 can2 挡)
+
+🧠 [1] → can5 (green) 送 collect_a
+   理由: 写死的顺序
+已写入 can5: x=-5.137 y=-9.326 yaw=-76.3 deg
+===================== can5 (green) -> collect_a  phase=all  16:31:16 =====================
+--- nav to can5 ---
+[INFO] [1787819480.185559]: nav_goto: waiting for move_base ...
+[INFO] [1787819480.301153]: nav_goto: skip pre-rotate (dyaw 133 <= 181)
+[INFO] [1787819490.306368]: nav_goto: reached, face recorded yaw -76 deg
+done yaw=-74.9 target=-76.3
+SUCCEEDED place=can5 pose=(-5.14,-9.27) dist=0.06
+--- approach + grab can5 ---
+[INFO] [1787819496.863331]: 采集阶段共走 0.00m, 预算重置
+[INFO] [1787819496.867162]: init  {"dist": 0.522, "x": 0.561, "y": 0.1117, "z": 0.141, "cx": 0.561, "cy": 0.1117, "cz": 0.101, "px": 259.0, "py": 63.0}
+[INFO] [1787819496.869388]: [1] x=0.561 y=+0.112  err=(+0.211, +0.112)
+[INFO] [1787819496.873538]:   drive dx=+0.030 dy=+0.030  (v=0.060 m/s, 0.7s)
+[INFO] [1787819499.533762]: [2] x=0.526 y=+0.071  err=(+0.176, +0.071)
+[INFO] [1787819499.537561]:   drive dx=+0.120 dy=+0.050  (v=0.060 m/s, 2.2s)
+[INFO] [1787819503.620820]: [3] x=0.410 y=+0.003  err=(+0.060, +0.003)
+[INFO] [1787819503.624320]:   drive dx=+0.042 dy=+0.000  (v=0.060 m/s, 0.7s)
+[INFO] [1787819506.215581]: [4] x=0.358 y=+0.006  err=(+0.008, +0.006)
+OK: converged: x=0.358 y=+0.006 (3 步, 共走了 0.21m)
+  [逼近耗时 11.0s]
+GRAB: success=True grasped (gripper=251)
+  [连服务 0.00s, 抓取本体 11.2s, 逼近->抓完总计 11.2s]
+--- gripper=251 (夹住罐~250 / 空~418 / 张开~63) ---
+--- grabbed, nav to collect_a ---
+[INFO] [1787819521.598003]: nav_goto: waiting for move_base ...
+[INFO] [1787819521.815886]: nav_goto: skip pre-rotate (dyaw -158 <= 181)
+[INFO] [1787819538.820340]: nav_goto: reached, face recorded yaw 149 deg
+done yaw=149.9 target=149.1
+SUCCEEDED place=collect_a pose=(-6.70,-7.03) dist=0.10
+--- place into box ---
+success: True
+message: "placed at (0.320, 0.000, 0.130) source=explicit"
+=== can5 done -> collect_a  16:32:34 ===
+   ✅ 收进 collect_a
+   ⛔ can1 暂时去不了(净空 0.07, 被 can2 挡)
+
+🧠 [2] → can4 (red) 送 collect_a
+   理由: 写死的顺序
+已写入 can4: x=-2.940 y=-7.159 yaw=-2.6 deg
+===================== can4 (red) -> collect_a  phase=all  16:32:41 =====================
+--- nav to can4 ---
+[INFO] [1787819565.464213]: nav_goto: waiting for move_base ...
+[INFO] [1787819565.687023]: nav_goto: skip pre-rotate (dyaw -152 <= 181)
+[INFO] [1787819587.691151]: nav_goto: reached, face recorded yaw -3 deg
+done yaw=-2.1 target=-2.6
+SUCCEEDED place=can4 pose=(-3.03,-7.14) dist=0.09
+--- approach + grab can4 ---
+[INFO] [1787819594.215502]: 采集阶段共走 0.00m, 预算重置
+[INFO] [1787819594.218474]: init  {"dist": 0.417, "x": 0.4691, "y": -0.0019, "z": 0.1972, "cx": 0.4691, "cy": -0.0019, "cz": 0.1572, "px": 341.0, "py": 54.0}
+[INFO] [1787819594.220702]: [1] x=0.469 y=-0.002  err=(+0.119, -0.002)
+[INFO] [1787819594.222482]:   drive dx=+0.030 dy=+0.000  (v=0.060 m/s, 0.5s)
+[INFO] [1787819596.640648]: [2] x=0.446 y=-0.006  err=(+0.096, -0.006)
+[INFO] [1787819596.645058]:   drive dx=+0.067 dy=+0.000  (v=0.060 m/s, 1.1s)
+[INFO] [1787819599.679933]: [3] x=0.383 y=-0.005  err=(+0.033, -0.005)
+[INFO] [1787819599.683125]:   drive dx=+0.023 dy=+0.000  (v=0.060 m/s, 0.4s)
+[INFO] [1787819601.965812]: [4] x=0.345 y=-0.009  err=(-0.005, -0.009)
+OK: converged: x=0.345 y=-0.009 (3 步, 共走了 0.12m)
+  [逼近耗时 9.3s]
+GRAB: success=True grasped (gripper=249)
+  [连服务 0.00s, 抓取本体 11.1s, 逼近->抓完总计 11.1s]
+--- gripper=250 (夹住罐~250 / 空~418 / 张开~63) ---
+--- grabbed, nav to collect_a ---
+[INFO] [1787819617.234394]: nav_goto: waiting for move_base ...
+[INFO] [1787819617.494023]: nav_goto: skip pre-rotate (dyaw 180 <= 181)
+[INFO] [1787819639.166143]: nav_goto: reached, face recorded yaw 149 deg
+done yaw=150.6 target=149.1
+SUCCEEDED place=collect_a pose=(-6.70,-6.98) dist=0.09
+--- place into box ---
+success: True
+message: "placed at (0.320, 0.000, 0.130) source=explicit"
+=== can4 done -> collect_a  16:34:15 ===
+   ✅ 收进 collect_a
+   ⛔ can1 暂时去不了(净空 0.02, 被 can2 挡)
+
+🧠 [3] → can3 (red) 送 collect_a
+   理由: 写死的顺序
+已写入 can3: x=-4.383 y=-4.242 yaw=+48.7 deg
+===================== can3 (red) -> collect_a  phase=all  16:34:21 =====================
+--- nav to can3 ---
+[INFO] [1787819665.768080]: nav_goto: waiting for move_base ...
+[INFO] [1787819665.997380]: nav_goto: skip pre-rotate (dyaw -101 <= 181)
+[INFO] [1787819688.001077]: nav_goto: reached, face recorded yaw 49 deg
+done yaw=48.4 target=48.7
+SUCCEEDED place=can3 pose=(-4.43,-4.30) dist=0.07
+--- approach + grab can3 ---
+[INFO] [1787819701.751167]: measure miss (1/2): no target found in ROI within 8s
+[INFO] [1787819710.061074]: measure miss (2/2): no target found in ROI within 8s
+[INFO] [1787819710.368282]:   drive dx=+0.050 dy=+0.000  (v=0.060 m/s, 0.8s)
+[INFO] [1787819720.268932]: measure miss (1/2): no target found in ROI within 8s
+[INFO] [1787819728.578861]: measure miss (2/2): no target found in ROI within 8s
+[INFO] [1787819728.885679]:   drive dx=+0.000 dy=+0.060  (v=0.060 m/s, 1.0s)
+[INFO] [1787819738.937143]: measure miss (1/1): no target found in ROI within 8s
+[INFO] [1787819739.244612]:   drive dx=+0.000 dy=+0.060  (v=0.060 m/s, 1.0s)
+[INFO] [1787819749.296681]: measure miss (1/1): no target found in ROI within 8s
+[INFO] [1787819749.604845]:   drive dx=+0.000 dy=+0.060  (v=0.060 m/s, 1.0s)
+[INFO] [1787819759.656960]: measure miss (1/1): no target found in ROI within 8s
+[INFO] [1787819759.964265]:   drive dx=+0.000 dy=-0.240  (v=0.060 m/s, 4.0s)
+[INFO] [1787819773.015681]: measure miss (1/1): no target found in ROI within 8s
+[INFO] [1787819773.322427]:   drive dx=+0.000 dy=-0.060  (v=0.060 m/s, 1.0s)
+[INFO] [1787819783.373760]: measure miss (1/1): no target found in ROI within 8s
+[INFO] [1787819783.681402]:   drive dx=+0.000 dy=-0.060  (v=0.060 m/s, 1.0s)
+[INFO] [1787819793.733143]: measure miss (1/1): no target found in ROI within 8s
+[INFO] [1787819794.037062]:   drive dx=+0.000 dy=+0.180  (v=0.060 m/s, 3.0s)
+[INFO] [1787819798.087731]:   drive dx=-0.050 dy=+0.000  (v=0.060 m/s, 0.8s)
+[INFO] [1787819807.989662]: measure miss (1/2): no target found in ROI within 8s
+[INFO] [1787819816.299231]: measure miss (2/2): no target found in ROI within 8s
+[INFO] [1787819816.607617]:   drive dx=+0.000 dy=+0.060  (v=0.060 m/s, 1.0s)
+[INFO] [1787819826.659286]: measure miss (1/1): no target found in ROI within 8s
+[INFO] [1787819826.966395]:   drive dx=+0.000 dy=+0.060  (v=0.060 m/s, 1.0s)
+[INFO] [1787819837.018240]: measure miss (1/1): no target found in ROI within 8s
+[INFO] [1787819837.325144]:   drive dx=+0.000 dy=+0.060  (v=0.060 m/s, 1.0s)
+[INFO] [1787819847.376753]: measure miss (1/1): no target found in ROI within 8s
+[INFO] [1787819847.684059]:   drive dx=+0.000 dy=-0.240  (v=0.060 m/s, 4.0s)
+[INFO] [1787819860.735665]: measure miss (1/1): no target found in ROI within 8s
+[INFO] [1787819861.044346]:   drive dx=+0.000 dy=-0.060  (v=0.060 m/s, 1.0s)
+[INFO] [1787819871.098017]: measure miss (1/1): no target found in ROI within 8s
+[INFO] [1787819871.405940]:   drive dx=+0.000 dy=-0.060  (v=0.060 m/s, 1.0s)
+[INFO] [1787819881.457428]: measure miss (1/1): no target found in ROI within 8s
+[INFO] [1787819881.762149]:   drive dx=+0.000 dy=+0.180  (v=0.060 m/s, 3.0s)
+[INFO] [1787819885.812040]:   drive dx=+0.050 dy=+0.000  (v=0.060 m/s, 0.8s)
+[INFO] [1787819888.571862]: 采集阶段共走 1.59m, 预算重置
+[INFO] [1787819888.576157]: init  {"dist": 0.401, "x": 0.4154, "y": 0.0459, "z": 0.1652, "cx": 0.4154, "cy": 0.0459, "cz": 0.1252, "px": 299.0, "py": 103.0}
+[INFO] [1787819888.579394]: [1] x=0.415 y=+0.046  err=(+0.065, +0.046)
+[INFO] [1787819888.583183]:   drive dx=+0.030 dy=+0.030  (v=0.060 m/s, 0.7s)
+[INFO] [1787819891.235548]: [2] x=0.380 y=+0.011  err=(+0.030, +0.011)
+[INFO] [1787819891.239240]:   drive dx=+0.021 dy=+0.000  (v=0.060 m/s, 0.4s)
+[INFO] [1787819893.529540]: [3] x=0.360 y=+0.011  err=(+0.010, +0.011)
+OK: converged: x=0.360 y=+0.011 (2 步, 共走了 0.06m)
+  [逼近耗时 200.5s]
+GRAB: success=True grasped (gripper=253)
+  [连服务 0.00s, 抓取本体 11.1s, 逼近->抓完总计 11.1s]
+--- gripper=253 (夹住罐~250 / 空~418 / 张开~63) ---
+--- grabbed, nav to collect_a ---
+[INFO] [1787819908.856504]: nav_goto: waiting for move_base ...
+[INFO] [1787819909.109604]: nav_goto: skip pre-rotate (dyaw 178 <= 181)
+[INFO] [1787819932.113855]: nav_goto: reached, face recorded yaw 149 deg
+done yaw=150.1 target=149.1
+SUCCEEDED place=collect_a pose=(-6.70,-6.92) dist=0.11
+--- place into box ---
+success: True
+message: "placed at (0.320, 0.000, 0.130) source=explicit"
+=== can3 done -> collect_a  16:39:08 ===
+   ✅ 收进 collect_a
+   ⛔ can1 暂时去不了(净空 0.13, 被 can2 挡)
+
+🧠 [4] → can2 (green) 送 collect_b
+   理由: 写死的顺序
+已写入 can2: x=+0.200 y=-2.169 yaw=+34.6 deg
+===================== can2 (green) -> collect_b  phase=all  16:39:12 =====================
+--- nav to can2 ---
+[INFO] [1787819956.309201]: nav_goto: waiting for move_base ...
+[INFO] [1787819956.527230]: nav_goto: skip pre-rotate (dyaw -116 <= 181)
+[INFO] [1787820009.532094]: nav_goto: reached, face recorded yaw 35 deg
+done yaw=34.9 target=34.6
+SUCCEEDED place=can2 pose=(0.09,-2.22) dist=0.12
+--- approach + grab can2 ---
+[INFO] [1787820016.058652]: 采集阶段共走 0.00m, 预算重置
+[INFO] [1787820016.062363]: init  {"dist": 0.436, "x": 0.4678, "y": 0.0651, "z": 0.1687, "cx": 0.4678, "cy": 0.0651, "cz": 0.1287, "px": 285.0, "py": 77.0}
+[INFO] [1787820016.065100]: [1] x=0.468 y=+0.065  err=(+0.118, +0.065)
+[INFO] [1787820016.067805]:   drive dx=+0.030 dy=+0.030  (v=0.060 m/s, 0.7s)
+[INFO] [1787820018.720729]: [2] x=0.441 y=+0.032  err=(+0.091, +0.032)
+[INFO] [1787820018.724135]:   drive dx=+0.064 dy=+0.022  (v=0.060 m/s, 1.1s)
+[INFO] [1787820021.789675]: [3] x=0.382 y=-0.009  err=(+0.032, -0.009)
+[INFO] [1787820021.793138]:   drive dx=+0.023 dy=+0.000  (v=0.060 m/s, 0.4s)
+[INFO] [1787820024.082791]: [4] x=0.365 y=-0.012  err=(+0.015, -0.012)
+OK: converged: x=0.365 y=-0.012 (3 步, 共走了 0.13m)
+  [逼近耗时 9.6s]
+GRAB: success=True grasped (gripper=250)
+  [连服务 0.01s, 抓取本体 11.2s, 逼近->抓完总计 11.2s]
+--- gripper=250 (夹住罐~250 / 空~418 / 张开~63) ---
+--- grabbed, nav to collect_b ---
+[INFO] [1787820039.326593]: nav_goto: waiting for move_base ...
+[INFO] [1787820039.574036]: nav_goto: skip pre-rotate (dyaw 73 <= 181)
+[INFO] [1787820055.245119]: nav_goto: reached, face recorded yaw 146 deg
+done yaw=146.1 target=145.8
+SUCCEEDED place=collect_b pose=(-0.54,0.33) dist=0.09
+--- place into box ---
+success: True
+message: "placed at (0.320, 0.000, 0.130) source=explicit"
+=== can2 done -> collect_b  16:41:11 ===
+   ✅ 收进 collect_b
+
+🧠 [5] → can1 (red) 送 collect_b
+   理由: 写死的顺序
+已写入 can1: x=+2.016 y=-0.721 yaw=-23.0 deg
+===================== can1 (red) -> collect_b  phase=all  16:41:19 =====================
+--- nav to can1 ---
+[INFO] [1787820084.018513]: nav_goto: waiting for move_base ...
+[INFO] [1787820084.266150]: nav_goto: skip pre-rotate (dyaw -170 <= 181)
+[INFO] [1787820099.603775]: nav_goto: reached, face recorded yaw -23 deg
+done yaw=-21.7 target=-23.0
+SUCCEEDED place=can1 pose=(1.92,-0.66) dist=0.11
+--- approach + grab can1 ---
+[INFO] [1787820106.112522]: 采集阶段共走 0.00m, 预算重置
+[INFO] [1787820106.115684]: init  {"dist": 0.458, "x": 0.5193, "y": -0.022, "z": 0.1898, "cx": 0.5193, "cy": -0.022, "cz": 0.1498, "px": 355.0, "py": 42.0}
+[INFO] [1787820106.117947]: [1] x=0.519 y=-0.022  err=(+0.169, -0.022)
+[INFO] [1787820106.120075]:   drive dx=+0.030 dy=-0.015  (v=0.060 m/s, 0.6s)
+[INFO] [1787820108.611172]: [2] x=0.501 y=-0.000  err=(+0.151, -0.000)
+[INFO] [1787820108.614464]:   drive dx=+0.105 dy=+0.000  (v=0.060 m/s, 1.8s)
+[INFO] [1787820112.325508]: [3] x=0.378 y=-0.016  err=(+0.028, -0.016)
+[INFO] [1787820112.328723]:   drive dx=+0.020 dy=-0.012  (v=0.060 m/s, 0.4s)
+[INFO] [1787820118.658255]: [4] x=0.360 y=-0.004  err=(+0.010, -0.004)
+OK: converged: x=0.360 y=-0.004 (3 步, 共走了 0.16m)
+  [逼近耗时 14.2s]
+GRAB: success=True grasped (gripper=251)
+  [连服务 0.00s, 抓取本体 12.0s, 逼近->抓完总计 12.0s]
+--- gripper=251 (夹住罐~250 / 空~418 / 张开~63) ---
+--- grabbed, nav to collect_b ---
+[INFO] [1787820134.701784]: nav_goto: waiting for move_base ...
+[INFO] [1787820134.969909]: nav_goto: skip pre-rotate (dyaw 179 <= 181)
+[INFO] [1787820151.307427]: nav_goto: reached, face recorded yaw 146 deg
+done yaw=144.1 target=145.8
+SUCCEEDED place=collect_b pose=(-0.53,0.34) dist=0.09
+--- place into box ---
+client_loop: send disconnect: Broken pipe
+   ❌ failed: 未知退出码 255
+!! 真实路径净空查不到(Command '['ssh', '-o', 'BatchMode=yes', 'uavg@<CAR_IP>', 'source /opt/ros/noetic/setup.bash; source ~/ros1_ws/devel/setup.bash; python3 ~/plan_clearance.py']' timed out after 120 seconds), 退回直线模型
+
+🧠 [6] → can1 (red) 送 collect_b
+   理由: 写死的顺序
+已写入 can1: x=+2.071 y=-1.168 yaw=+37.0 deg
+!! 异常退出, 补一次停录
++ pkill -f [r]ecord_cam.py
+[REC] 540s  8100 frames  rgb_msgs=15182 depth_msgs=16014
+[REC] 570s  8550 frames  rgb_msgs=16073 depth_msgs=16904
+[REC] 600s  9000 frames  rgb_msgs=16943 depth_msgs=17792
+[REC] 630s  9450 frames  rgb_msgs=17788 depth_msgs=18682
+[REC] 660s  9900 frames  rgb_msgs=18678 depth_msgs=19572
+[REC] 690s  10350 frames  rgb_msgs=19536 depth_msgs=20461
+Traceback (most recent call last):
+  File "/home/ntuicg/mission_run.py", line 423, in <module>
+    main()
+    ~~~~^^
+  File "/home/ntuicg/mission_run.py", line 379, in main
+    rc, interrupted = run_leg(pick, station, False, a.interruptible, state,
+                      ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                              a.feed, seen, statepath)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ntuicg/mission_run.py", line 192, in run_leg
+    return ssh("bash ~/run_one_can.sh %s %s %s" % (name, color, station), dry)[0], False
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ntuicg/mission_run.py", line 155, in ssh
+    p = subprocess.run(["ssh", "-o", "BatchMode=yes", "%s@%s" % (USER, CAR), cmd],
+                       capture_output=True, text=True, timeout=timeout)
+  File "/home/ntuicg/anaconda3/lib/python3.13/subprocess.py", line 556, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ntuicg/anaconda3/lib/python3.13/subprocess.py", line 1222, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ntuicg/anaconda3/lib/python3.13/subprocess.py", line 2128, in _communicate
+    ready = selector.select(timeout)
+  File "/home/ntuicg/anaconda3/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ntuicg/mission_run.py", line 434, in <module>
+    ssh(BAG_STOP, False)
+    ~~~^^^^^^^^^^^^^^^^^
+  File "/home/ntuicg/mission_run.py", line 155, in ssh
+    p = subprocess.run(["ssh", "-o", "BatchMode=yes", "%s@%s" % (USER, CAR), cmd],
+                       capture_output=True, text=True, timeout=timeout)
+  File "/home/ntuicg/anaconda3/lib/python3.13/subprocess.py", line 556, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ntuicg/anaconda3/lib/python3.13/subprocess.py", line 1222, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ntuicg/anaconda3/lib/python3.13/subprocess.py", line 2128, in _communicate
+    ready = selector.select(timeout)
+  File "/home/ntuicg/anaconda3/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+KeyboardInterrupt

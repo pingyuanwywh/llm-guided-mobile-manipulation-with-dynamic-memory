@@ -1,0 +1,249 @@
++ bash ~/rec.sh start 0827d_drone5
++ setsid nohup python3 -u ~/record_cam.py --tag 0827d_drone5 > ~/Log/rec.log 2>&1 &
+[INFO] [1787833817.702587]: set_ldp(False) -> True
+[INFO] [1787833817.705992]: 等第一帧 /depth_cam/rgb/image_raw / /depth_cam/depth/image_raw ...
+[REC] 首帧深度有效率 79.6%
+[INFO] [1787833817.845029]: 录制中 -> /home/uavg/demo_videos/20260827_203017_0827d_drone5 (640x360 @ 15 fps, h264)
+[REC] /home/uavg/demo_videos/20260827_203017_0827d_drone5_rgb.mp4
+[REC] /home/uavg/demo_videos/20260827_203017_0827d_drone5_depth.mp4
++ rosbag record 0827d_drone5
+10657 bash -c mkdir -p ~/bags && tmux kill-session -t bag 2>/dev/null; tmux new-session -d -s bag 'source /opt/ros/noetic/setup.bash && rosbag record -O ~/bags/0827d_drone5.bag /tf /tf_static /scan /cmd_vel /move_base/NavfnROS/plan /move_base/TebLocalPlannerROS/local_plan /move_base/TebLocalPlannerROS/global_plan /move_base/current_goal /move_base/global_costmap/footprint'; sleep 3; pgrep -af 'rosbag record -O' | head -1
+=== 任务开始  模式=free  站=['collect_a', 'collect_b']  真车 uavg@<CAR_IP> ===
+    告警线 0.50m / 必撞线 0.193m   净空来源: move_base 真实路径
+
+🧠 [1] → can5 (green) 送 collect_a
+   理由: 写死的顺序
+已写入 can5: x=-2.669 y=-2.831 yaw=-58.8 deg
+===================== can5 (green) -> collect_a  phase=all  20:30:30 =====================
+--- nav to can5 ---
+[INFO] [1787833834.455532]: nav_goto: waiting for move_base ...
+[INFO] [1787833834.672886]: nav_goto: skip pre-rotate (dyaw -141 <= 181)
+[INFO] [1787833855.343986]: nav_goto: reached, face recorded yaw -59 deg
+done yaw=-58.3 target=-58.8
+SUCCEEDED place=can5 pose=(-2.72,-2.74) dist=0.10
+--- approach + grab can5 ---
+[INFO] [1787833861.916274]: 采集阶段共走 0.00m, 预算重置
+[INFO] [1787833861.919615]: init  {"dist": 0.422, "x": 0.4616, "y": 0.0437, "z": 0.1823, "cx": 0.4616, "cy": 0.0437, "cz": 0.1423, "px": 302.0, "py": 69.0}
+[INFO] [1787833861.922082]: [1] x=0.462 y=+0.044  err=(+0.112, +0.044)
+[INFO] [1787833861.924977]:   drive dx=+0.030 dy=+0.030  (v=0.060 m/s, 0.7s)
+[INFO] [1787833864.614898]: [2] x=0.436 y=+0.011  err=(+0.086, +0.011)
+[INFO] [1787833864.618180]:   drive dx=+0.060 dy=+0.000  (v=0.060 m/s, 1.0s)
+[INFO] [1787833867.554410]: [3] x=0.382 y=+0.005  err=(+0.032, +0.005)
+[INFO] [1787833867.557688]:   drive dx=+0.022 dy=+0.000  (v=0.060 m/s, 0.4s)
+[INFO] [1787833869.891949]: [4] x=0.348 y=+0.004  err=(-0.002, +0.004)
+OK: converged: x=0.348 y=+0.004 (3 步, 共走了 0.12m)
+  [逼近耗时 9.6s]
+GRAB: success=True grasped (gripper=242)
+  [连服务 0.00s, 抓取本体 11.2s, 逼近->抓完总计 11.2s]
+--- gripper=242 (夹住罐~250 / 空~418 / 张开~63) ---
+--- grabbed, nav to collect_a ---
+[INFO] [1787833885.121517]: nav_goto: waiting for move_base ...
+[INFO] [1787833885.378619]: nav_goto: skip pre-rotate (dyaw -180 <= 181)
+[INFO] [1787833905.382653]: nav_goto: reached, face recorded yaw 82 deg
+done yaw=83.3 target=82.0
+SUCCEEDED place=collect_a pose=(-4.47,0.03) dist=0.10
+--- place into box ---
+success: True
+message: "placed at (0.320, 0.000, 0.130) source=explicit"
+=== can5 done -> collect_a  20:32:01 ===
+   ✅ 收进 collect_a
+
+🧠 [2] → can4 (red) 送 collect_a
+   理由: 写死的顺序
+已写入 can4: x=-5.280 y=-2.234 yaw=-109.1 deg
+===================== can4 (red) -> collect_a  phase=all  20:32:07 =====================
+--- nav to can4 ---
+[INFO] [1787833931.181319]: nav_goto: waiting for move_base ...
+[INFO] [1787833931.399547]: nav_goto: skip pre-rotate (dyaw 168 <= 181)
+[INFO] [1787833944.737644]: nav_goto: reached, face recorded yaw -109 deg
+done yaw=-109.5 target=-109.1
+SUCCEEDED place=can4 pose=(-5.28,-2.12) dist=0.11
+--- approach + grab can4 ---
+[INFO] [1787833951.288287]: 采集阶段共走 0.00m, 预算重置
+[INFO] [1787833951.291917]: init  {"dist": 0.511, "x": 0.5417, "y": 0.0955, "z": 0.1369, "cx": 0.5417, "cy": 0.0955, "cz": 0.0969, "px": 269.0, "py": 72.0}
+[INFO] [1787833951.294396]: [1] x=0.542 y=+0.096  err=(+0.192, +0.096)
+[INFO] [1787833951.296467]:   drive dx=+0.030 dy=+0.030  (v=0.060 m/s, 0.7s)
+[INFO] [1787833954.040735]: [2] x=0.500 y=+0.070  err=(+0.150, +0.070)
+[INFO] [1787833954.044552]:   drive dx=+0.105 dy=+0.049  (v=0.060 m/s, 1.9s)
+[INFO] [1787833957.908738]: [3] x=0.384 y=+0.011  err=(+0.034, +0.011)
+[INFO] [1787833957.911771]:   drive dx=+0.024 dy=+0.000  (v=0.060 m/s, 0.4s)
+[INFO] [1787833960.182904]: [4] x=0.359 y=+0.013  err=(+0.009, +0.013)
+OK: converged: x=0.359 y=+0.013 (3 步, 共走了 0.18m)
+  [逼近耗时 10.5s]
+GRAB: success=True grasped (gripper=253)
+  [连服务 0.00s, 抓取本体 11.2s, 逼近->抓完总计 11.2s]
+--- gripper=253 (夹住罐~250 / 空~418 / 张开~63) ---
+--- grabbed, nav to collect_a ---
+[INFO] [1787833975.336726]: nav_goto: waiting for move_base ...
+[INFO] [1787833975.577923]: nav_goto: skip pre-rotate (dyaw -178 <= 181)
+[INFO] [1787833989.915477]: nav_goto: reached, face recorded yaw 82 deg
+done yaw=82.8 target=82.0
+SUCCEEDED place=collect_a pose=(-4.48,0.06) dist=0.08
+--- place into box ---
+success: True
+message: "placed at (0.320, 0.000, 0.130) source=explicit"
+=== can4 done -> collect_a  20:33:25 ===
+   ✅ 收进 collect_a
+
+🧠 [3] → can3 (red) 送 collect_a
+   理由: 写死的顺序
+已写入 can3: x=-0.044 y=+0.018 yaw=-1.5 deg
+===================== can3 (red) -> collect_a  phase=all  20:33:31 =====================
+--- nav to can3 ---
+[INFO] [1787834015.511307]: nav_goto: waiting for move_base ...
+[INFO] [1787834015.759594]: nav_goto: skip pre-rotate (dyaw -84 <= 181)
+[INFO] [1787834043.097168]: nav_goto: reached, face recorded yaw -2 deg
+done yaw=-0.2 target=-1.5
+SUCCEEDED place=can3 pose=(-0.11,0.02) dist=0.07
+--- approach + grab can3 ---
+[INFO] [1787834049.621398]: 采集阶段共走 0.00m, 预算重置
+[INFO] [1787834049.624900]: init  {"dist": 0.445, "x": 0.5013, "y": -0.0072, "z": 0.19, "cx": 0.5013, "cy": -0.0072, "cz": 0.15, "px": 344.0, "py": 48.0}
+[INFO] [1787834049.627416]: [1] x=0.501 y=-0.007  err=(+0.151, -0.007)
+[INFO] [1787834049.629851]:   drive dx=+0.030 dy=+0.000  (v=0.060 m/s, 0.5s)
+[INFO] [1787834052.009863]: [2] x=0.482 y=-0.009  err=(+0.132, -0.009)
+[INFO] [1787834052.013088]:   drive dx=+0.092 dy=+0.000  (v=0.060 m/s, 1.5s)
+[INFO] [1787834055.445410]: [3] x=0.387 y=-0.009  err=(+0.037, -0.009)
+[INFO] [1787834055.448566]:   drive dx=+0.026 dy=+0.000  (v=0.060 m/s, 0.4s)
+[INFO] [1787834057.777826]: [4] x=0.357 y=-0.015  err=(+0.007, -0.015)
+OK: converged: x=0.357 y=-0.015 (3 步, 共走了 0.15m)
+  [逼近耗时 9.8s]
+GRAB: success=True grasped (gripper=245)
+  [连服务 0.01s, 抓取本体 11.1s, 逼近->抓完总计 11.1s]
+--- gripper=245 (夹住罐~250 / 空~418 / 张开~63) ---
+--- grabbed, nav to collect_a ---
+[INFO] [1787834073.043033]: nav_goto: waiting for move_base ...
+[INFO] [1787834073.270022]: nav_goto: skip pre-rotate (dyaw 179 <= 181)
+[INFO] [1787834100.608504]: nav_goto: reached, face recorded yaw 82 deg
+done yaw=81.8 target=82.0
+SUCCEEDED place=collect_a pose=(-4.39,0.09) dist=0.08
+--- place into box ---
+success: True
+message: "placed at (0.320, 0.000, 0.130) source=explicit"
+=== can3 done -> collect_a  20:35:16 ===
+   ✅ 收进 collect_a
+
+🧠 [4] → can2 (red) 送 collect_b
+   理由: 写死的顺序
+已写入 can2: x=+3.137 y=-2.684 yaw=-20.4 deg
+===================== can2 (red) -> collect_b  phase=all  20:35:20 =====================
+--- nav to can2 ---
+[INFO] [1787834124.806748]: nav_goto: waiting for move_base ...
+[INFO] [1787834125.077386]: nav_goto: skip pre-rotate (dyaw -101 <= 181)
+[INFO] [1787834177.415283]: nav_goto: reached, face recorded yaw -20 deg
+done yaw=-20.0 target=-20.4
+SUCCEEDED place=can2 pose=(3.07,-2.66) dist=0.07
+--- approach + grab can2 ---
+[INFO] [1787834184.086616]: 采集阶段共走 0.00m, 预算重置
+[INFO] [1787834184.089931]: init  {"dist": 0.557, "x": 0.6148, "y": 0.0339, "z": 0.1458, "cx": 0.6148, "cy": 0.0339, "cz": 0.1058, "px": 313.0, "py": 44.0}
+[INFO] [1787834184.093709]: [1] x=0.615 y=+0.034  err=(+0.265, +0.034)
+[INFO] [1787834184.095580]:   drive dx=+0.030 dy=+0.024  (v=0.060 m/s, 0.6s)
+[INFO] [1787834186.654992]: [2] x=0.596 y=-0.002  err=(+0.246, -0.002)
+[INFO] [1787834186.658551]:   drive dx=+0.120 dy=+0.000  (v=0.060 m/s, 2.0s)
+[INFO] [1787834190.606952]: [3] x=0.411 y=+0.018  err=(+0.061, +0.018)
+[INFO] [1787834190.610320]:   drive dx=+0.043 dy=+0.013  (v=0.060 m/s, 0.7s)
+[INFO] [1787834193.294199]: [4] x=0.373 y=+0.005  err=(+0.023, +0.005)
+[INFO] [1787834193.298195]:   drive dx=+0.016 dy=+0.000  (v=0.060 m/s, 0.3s)
+[INFO] [1787834195.515064]: [5] x=0.355 y=-0.001  err=(+0.005, -0.001)
+OK: converged: x=0.355 y=-0.001 (4 步, 共走了 0.22m)
+  [逼近耗时 13.2s]
+GRAB: success=True grasped (gripper=245)
+  [连服务 0.00s, 抓取本体 11.2s, 逼近->抓完总计 11.2s]
+--- gripper=245 (夹住罐~250 / 空~418 / 张开~63) ---
+--- grabbed, nav to collect_b ---
+[INFO] [1787834210.661521]: nav_goto: waiting for move_base ...
+[INFO] [1787834210.941017]: nav_goto: skip pre-rotate (dyaw 70 <= 181)
+[INFO] [1787834226.278620]: nav_goto: reached, face recorded yaw 87 deg
+done yaw=88.4 target=86.7
+SUCCEEDED place=collect_b pose=(4.94,-0.75) dist=0.09
+--- place into box ---
+success: True
+message: "placed at (0.320, 0.000, 0.130) source=explicit"
+=== can2 done -> collect_b  20:37:22 ===
+   ✅ 收进 collect_b
+
+🧠 [5] → can1 (green) 送 collect_b
+   理由: 写死的顺序
+已写入 can1: x=+5.254 y=-2.914 yaw=-82.5 deg
+===================== can1 (green) -> collect_b  phase=all  20:37:26 =====================
+--- nav to can1 ---
+[INFO] [1787834250.176461]: nav_goto: waiting for move_base ...
+[INFO] [1787834250.412884]: nav_goto: skip pre-rotate (dyaw -171 <= 181)
+[INFO] [1787834262.750437]: nav_goto: reached, face recorded yaw -82 deg
+done yaw=-89.3 target=-82.5
+SUCCEEDED place=can1 pose=(5.26,-2.79) dist=0.12
+--- approach + grab can1 ---
+[INFO] [1787834281.770772]: measure miss (1/2): no target found in ROI within 8s
+[INFO] [1787834290.079457]: measure miss (2/2): no target found in ROI within 8s
+[INFO] [1787834290.386527]:   drive dx=+0.050 dy=+0.000  (v=0.060 m/s, 0.8s)
+[INFO] [1787834293.163054]: 采集阶段共走 0.05m, 预算重置
+[INFO] [1787834293.166472]: init  {"dist": 0.494, "x": 0.5548, "y": 0.0118, "z": 0.1746, "cx": 0.5548, "cy": 0.0118, "cz": 0.1346, "px": 328.0, "py": 42.0}
+[INFO] [1787834293.169077]: [1] x=0.555 y=+0.012  err=(+0.205, +0.012)
+[INFO] [1787834293.171828]:   drive dx=+0.030 dy=+0.000  (v=0.060 m/s, 0.5s)
+[INFO] [1787834295.625527]: [2] x=0.527 y=+0.019  err=(+0.177, +0.019)
+[INFO] [1787834295.629001]:   drive dx=+0.120 dy=+0.013  (v=0.060 m/s, 2.0s)
+[INFO] [1787834299.633502]: [3] x=0.397 y=-0.012  err=(+0.047, -0.012)
+[INFO] [1787834299.637025]:   drive dx=+0.033 dy=+0.000  (v=0.060 m/s, 0.5s)
+[INFO] [1787834302.146885]: [4] x=0.357 y=-0.011  err=(+0.007, -0.011)
+OK: converged: x=0.357 y=-0.011 (3 步, 共走了 0.18m)
+  [逼近耗时 29.1s]
+GRAB: success=False nothing grasped (gripper=404, empty>=350)
+  [连服务 0.00s, 抓取本体 13.1s, 逼近->抓完总计 13.2s]
+--- gripper=63 (夹住罐~250 / 空~418 / 张开~63) ---
+!! can1 NOT grabbed (g=63)
+[WARN] [1787834290.383214]: 看不到目标, 小步前进 0.05m (累计 0.05 / 上限 0.15)
+   ❌ failed: 没抓住(空夹)。罐身通体是色的, 所以多半是配料表/条形码那面正对相机, 色块外接框中心偏离了罐子轴心 —— 重试时接近方向会自动换 60 度
+
+🧠 [6] → can1 (green) 送 collect_b
+   理由: 写死的顺序
+已写入 can1: x=+4.897 y=-3.188 yaw=-22.5 deg
+===================== can1 (green) -> collect_b  phase=all  20:38:41 =====================
+--- nav to can1 ---
+[INFO] [1787834325.725584]: nav_goto: waiting for move_base ...
+[INFO] [1787834325.974144]: nav_goto: skip pre-rotate (dyaw -85 <= 181)
+[INFO] [1787834331.311926]: nav_goto: reached, face recorded yaw -22 deg
+done yaw=-28.9 target=-22.5
+SUCCEEDED place=can1 pose=(4.99,-3.26) dist=0.12
+--- approach + grab can1 ---
+[INFO] [1787834351.967621]: 采集阶段共走 0.00m, 预算重置
+[INFO] [1787834351.971122]: init  {"dist": 0.395, "x": 0.3986, "y": -0.0778, "z": 0.1566, "cx": 0.3986, "cy": -0.0778, "cz": 0.1166, "px": 411.0, "py": 118.0}
+[INFO] [1787834351.973358]: [1] x=0.399 y=-0.078  err=(+0.049, -0.078)
+[INFO] [1787834351.975827]:   drive dx=+0.030 dy=-0.030  (v=0.060 m/s, 0.7s)
+[INFO] [1787834354.663806]: [2] x=0.357 y=-0.048  err=(+0.007, -0.048)
+[INFO] [1787834354.670106]:   drive dx=+0.000 dy=-0.034  (v=0.060 m/s, 0.6s)
+[INFO] [1787834357.178030]: [3] x=0.354 y=-0.034  err=(+0.004, -0.034)
+[INFO] [1787834357.181280]:   drive dx=+0.000 dy=-0.024  (v=0.060 m/s, 0.4s)
+[INFO] [1787834359.512997]: [4] x=0.352 y=-0.011  err=(+0.002, -0.011)
+OK: converged: x=0.352 y=-0.011 (3 步, 共走了 0.10m)
+  [逼近耗时 9.2s]
+GRAB: success=True grasped (gripper=247)
+  [连服务 0.00s, 抓取本体 11.2s, 逼近->抓完总计 11.2s]
+--- gripper=245 (夹住罐~250 / 空~418 / 张开~63) ---
+--- grabbed, nav to collect_b ---
+[INFO] [1787834374.710882]: nav_goto: waiting for move_base ...
+[INFO] [1787834374.968398]: nav_goto: skip pre-rotate (dyaw 114 <= 181)
+[INFO] [1787834391.973118]: nav_goto: reached, face recorded yaw 87 deg
+done yaw=87.7 target=86.7
+SUCCEEDED place=collect_b pose=(4.94,-0.75) dist=0.09
+--- place into box ---
+success: True
+message: "placed at (0.320, 0.000, 0.130) source=explicit"
+=== can1 done -> collect_b  20:40:07 ===
+   ✅ 收进 collect_b
+
+⏳ 手头没活了, 再等 8s 看无人机还报不报...
+
+=== 收工: 等了 8s 没有新目标 ===
+--- 停止车载录制 ---
++ pkill -f [r]ecord_cam.py
+[REC] 510s  7650 frames  rgb_msgs=11719 depth_msgs=15119
+[REC] 540s  8100 frames  rgb_msgs=12223 depth_msgs=16008
+[REC] 570s  8550 frames  rgb_msgs=12725 depth_msgs=16898
+[DONE] 8993 帧 / 600.3s, 其中 381 帧画了标注
+       /home/uavg/demo_videos/20260827_203017_0827d_drone5_rgb.mp4  146.1 MB
+       /home/uavg/demo_videos/20260827_203017_0827d_drone5_depth.mp4  15.3 MB
+!! bag 仍是 .active, 需 rosbag reindex
+-rw-rw-r--  1 uavg uavg  50290688 Aug 27 11:39 0827_drone5.bag.active
+-rw-rw-r--  1 uavg uavg  62337678 Aug  8 21:22 scene3.bag
+
+=== 结束: 收进 5/5  (can1, can2, can3, can4, can5) ===
+决策日志: /home/ntuicg/mission_log.jsonl

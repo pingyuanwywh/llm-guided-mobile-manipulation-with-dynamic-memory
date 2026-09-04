@@ -1,0 +1,17 @@
+# 现场参数（车 IP / 本机 IP）——真值只留本机，别进 git
+.jetrover_env
+
+# Python
+__pycache__/
+*.pyc
+
+# 视频素材：36G，GitHub 装不下，走网盘/移动硬盘
+*.mp4
+*.mkv
+*.avi
+*.bag
+*.bag.active
+
+# 临时
+*.swp
+.DS_Store

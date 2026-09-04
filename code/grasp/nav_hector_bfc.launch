@@ -1,0 +1,62 @@
+<!--
+  nav_hector.launch  —  无里程计(odom-free)自主导航
+  小车没有轮式编码器/里程计, 所以不能用 amcl(它需要 odom->base 的TF和运动模型)。
+  改用 hector_mapping 做激光扫描匹配, 直接输出 map->base_footprint 位姿,
+  同时实时发布 /map, 再让 move_base 在其上规划。
+
+  TF 树:  map =[hector]=> base_footprint =[static]=> laser
+
+  依赖(需先启动):
+    1) board_node              (写串口)
+    2) cmd_vel_to_motor.py     (/cmd_vel -> /board/set_motor)
+    3) rplidar 节点            (/scan, frame=laser)
+  本launch只启动: 静态TF + hector + move_base。
+-->
+<launch>
+  <arg name="use_teb" default="false"/>   <!-- false=DWA(更稳更轻), true=TEB -->
+
+  <!-- 1) 静态TF: base_footprint 与 laser 重合(雷达在车头, 取雷达位置作为底盘原点;
+       z 取0以匹配下面 hector 的 z 过滤范围 [-0.1,0.2]) -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_laser"
+        args="0.10 0 0 3.14159 0 0 base_footprint laser"/>
+
+  <!-- 2) hector 扫描匹配定位+建图: 直接发布 map->base_footprint
+       参数取自用户实测可建图的配置(分辨率0.025与已存地图一致), base 帧改用
+       base_footprint 以对齐 move_base 的 costmap 配置 -->
+  <node pkg="hector_mapping" type="hector_mapping" name="hector_mapping" output="screen">
+    <param name="map_frame"  value="map"/>
+    <param name="base_frame" value="base_footprint"/>
+    <param name="odom_frame" value="base_footprint"/>   <!-- 无odom: odom_frame=base_frame -->
+    <param name="pub_map_odom_transform"        value="true"/>
+    <param name="pub_map_scanmatch_transform"   value="true"/>
+    <param name="scan_topic" value="scan"/>
+    <param name="use_tf_scan_transformation"  value="true"/>
+    <param name="use_tf_pose_start_estimate"  value="false"/>
+
+    <param name="map_resolution" value="0.025"/>
+    <param name="map_size"       value="1024"/>
+    <param name="map_start_x"    value="0.5"/>
+    <param name="map_start_y"    value="0.5"/>
+    <param name="map_multi_res_levels" value="2"/>
+    <param name="map_pub_period" value="0.5"/>
+
+    <param name="update_factor_free"          value="0.4"/>
+    <param name="update_factor_occupied"      value="0.9"/>
+    <param name="map_update_distance_thresh"  value="0.1"/>
+    <param name="map_update_angle_thresh"     value="0.06"/>
+
+    <param name="laser_min_dist" value="0.15"/>
+    <param name="laser_max_dist" value="12.0"/>
+    <param name="laser_z_min_value" value="-0.1"/>
+    <param name="laser_z_max_value" value="0.2"/>
+
+    <param name="advertise_map_service" value="true"/>
+    <param name="scan_subscriber_queue_size" value="5"/>
+  </node>
+
+  <!-- 3) move_base 导航 (复用 navigation 包里的 move_base 配置) -->
+  <include file="$(find navigation)/launch/include/move_base.launch">
+    <arg name="use_teb" value="$(arg use_teb)"/>
+  </include>
+
+</launch>

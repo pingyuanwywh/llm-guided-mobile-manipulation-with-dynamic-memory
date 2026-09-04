@@ -1,0 +1,57 @@
+frame: map
+mode: free
+stations:
+  collect_a:
+    x: -4.249
+    y: 0.178
+  collect_b:
+    x: 0.003
+    y: 0.003
+robot:
+  x: 0.003
+  y: 0.003
+  holding: null
+  at: collect_b
+active: null
+cans:
+  can1:
+    x: -0.651
+    y: -0.782
+    color: red
+    source: manual
+    status: pending
+    attempts: 0
+    station: collect_a
+  can2:
+    x: -1.062
+    y: 1.094
+    color: green
+    source: manual
+    status: collected
+    attempts: 1
+    station: collect_a
+  can3:
+    x: -4.424
+    y: -0.412
+    color: red
+    source: manual
+    status: failed
+    attempts: 2
+    station: collect_b
+    note: 没抓住(空夹)。罐身通体是色的, 所以多半是配料表/条形码那面正对相机, 色块外接框中心偏离了罐子轴心 —— 重试时接近方向会自动换 60 度
+  can4:
+    x: -3.482
+    y: 2.326
+    color: red
+    source: manual
+    status: collected
+    attempts: 1
+    station: collect_a
+  can5:
+    x: -2.642
+    y: -0.98
+    color: red
+    source: manual
+    status: pending
+    attempts: 0
+    station: collect_b

@@ -1,0 +1,57 @@
+frame: map
+mode: free
+stations:
+  collect_a:
+    x: 3.1272
+    y: -2.1647
+  collect_b:
+    x: -0.1007
+    y: 0.0486
+robot:
+  x: -0.1007
+  y: 0.0486
+  holding: null
+  at: collect_b
+active: null
+cans:
+  can1:
+    x: 1.523
+    y: 0.086
+    color: red
+    source: manual
+    status: pending
+    attempts: 0
+    station: collect_b
+  can2:
+    x: 2.833
+    y: 0.325
+    color: green
+    source: manual
+    status: pending
+    attempts: 0
+    station: collect_b
+  can3:
+    x: 1.671
+    y: -2.4
+    color: red
+    source: manual
+    status: collected
+    attempts: 1
+    station: collect_a
+  can4:
+    x: -0.139
+    y: -2.413
+    color: red
+    source: manual
+    status: collected
+    attempts: 1
+    station: collect_a
+  can5:
+    x: 1.657
+    y: -1.109
+    color: red
+    source: manual
+    status: failed
+    attempts: 1
+    station: collect_b
+    note: 导航到不了它(可能路被挡或目标点在障碍里)

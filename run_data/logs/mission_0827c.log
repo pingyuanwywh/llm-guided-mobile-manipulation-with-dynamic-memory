@@ -1,0 +1,93 @@
++ bash ~/rec.sh start 0827c_drone5
++ setsid nohup python3 -u ~/record_cam.py --tag 0827c_drone5 > ~/Log/rec.log 2>&1 &
+[INFO] [1787829850.381778]: set_ldp(False) -> True
+[INFO] [1787829850.384772]: 等第一帧 /depth_cam/rgb/image_raw / /depth_cam/depth/image_raw ...
+[REC] 首帧深度有效率 89.2%
+[INFO] [1787829850.500306]: 录制中 -> /home/uavg/demo_videos/20260827_192410_0827c_drone5 (640x360 @ 15 fps, h264)
+[REC] /home/uavg/demo_videos/20260827_192410_0827c_drone5_rgb.mp4
+[REC] /home/uavg/demo_videos/20260827_192410_0827c_drone5_depth.mp4
++ rosbag record 0827c_drone5
+10875 bash -c mkdir -p ~/bags && tmux kill-session -t bag 2>/dev/null; tmux new-session -d -s bag 'source /opt/ros/noetic/setup.bash && rosbag record -O ~/bags/0827c_drone5.bag /tf /tf_static /scan /cmd_vel /move_base/NavfnROS/plan /move_base/TebLocalPlannerROS/local_plan /move_base/TebLocalPlannerROS/global_plan /move_base/current_goal /move_base/global_costmap/footprint'; sleep 3; pgrep -af 'rosbag record -O' | head -1
+=== 任务开始  模式=free  站=['collect_a', 'collect_b']  真车 uavg@<CAR_IP> ===
+    告警线 0.50m / 必撞线 0.193m   净空来源: move_base 真实路径
+   ⛔ can1 暂时去不了(净空 0.17, 被 can2 挡)
+
+🧠 [1] → can5 (green) 送 collect_a
+   理由: 写死的顺序
+已写入 can5: x=-0.781 y=-7.825 yaw=+27.3 deg
+===================== can5 (green) -> collect_a  phase=all  19:24:23 =====================
+--- nav to can5 ---
+[INFO] [1787829867.893455]: nav_goto: waiting for move_base ...
+[INFO] [1787829868.010079]: nav_goto: skip pre-rotate (dyaw 110 <= 181)
+[INFO] [1787829880.348029]: nav_goto: reached, face recorded yaw 27 deg
+done yaw=26.5 target=27.3
+SUCCEEDED place=can5 pose=(-0.85,-7.87) dist=0.09
+--- approach + grab can5 ---
+[INFO] [1787829886.910158]: 采集阶段共走 0.00m, 预算重置
+[INFO] [1787829886.913610]: init  {"dist": 0.501, "x": 0.5607, "y": -0.0149, "z": 0.1707, "cx": 0.5607, "cy": -0.0149, "cz": 0.1307, "px": 347.0, "py": 43.0}
+[INFO] [1787829886.916057]: [1] x=0.561 y=-0.015  err=(+0.211, -0.015)
+[INFO] [1787829886.918198]:   drive dx=+0.030 dy=+0.000  (v=0.060 m/s, 0.5s)
+[INFO] [1787829889.307629]: [2] x=0.538 y=-0.022  err=(+0.188, -0.022)
+[INFO] [1787829889.311019]:   drive dx=+0.120 dy=-0.015  (v=0.060 m/s, 2.0s)
+[INFO] [1787829893.283555]: [3] x=0.418 y=-0.019  err=(+0.068, -0.019)
+[INFO] [1787829893.287310]:   drive dx=+0.047 dy=-0.013  (v=0.060 m/s, 0.8s)
+[INFO] [1787829896.076516]: [4] x=0.359 y=-0.003  err=(+0.009, -0.003)
+OK: converged: x=0.359 y=-0.003 (3 步, 共走了 0.20m)
+  [逼近耗时 10.8s]
+GRAB: success=True grasped (gripper=251)
+  [连服务 0.00s, 抓取本体 11.2s, 逼近->抓完总计 11.2s]
+--- gripper=251 (夹住罐~250 / 空~418 / 张开~63) ---
+--- grabbed, nav to collect_a ---
+[INFO] [1787829911.302144]: nav_goto: waiting for move_base ...
+[INFO] [1787829911.583292]: nav_goto: skip pre-rotate (dyaw -172 <= 181)
+[INFO] [1787829930.921045]: nav_goto: reached, face recorded yaw 177 deg
+done yaw=178.5 target=177.4
+SUCCEEDED place=collect_a pose=(-3.44,-9.86) dist=0.09
+--- place into box ---
+success: True
+message: "placed at (0.320, 0.000, 0.130) source=explicit"
+=== can5 done -> collect_a  19:25:46 ===
+   ✅ 收进 collect_a
+   ⛔ can1 暂时去不了(净空 0.15, 被 can2 挡)
+   ⛔ can2 暂时去不了(净空 0.49, 被 can3 挡)
+
+🧠 [2] → can4 (red) 送 collect_a
+   理由: 写死的顺序
+已写入 can4: x=-0.912 y=-10.554 yaw=-15.2 deg
+!! 异常退出, 补一次停录
++ pkill -f [r]ecord_cam.py
+[REC] 90s  1350 frames  rgb_msgs=2152 depth_msgs=2669
+[REC] 120s  1800 frames  rgb_msgs=2984 depth_msgs=3558
+[REC] 150s  2250 frames  rgb_msgs=3736 depth_msgs=4447
+[DONE] 2470 帧 / 165.8s, 其中 59 帧画了标注
+       /home/uavg/demo_videos/20260827_192410_0827c_drone5_rgb.mp4  41.2 MB
+       /home/uavg/demo_videos/20260827_192410_0827c_drone5_depth.mp4  3.5 MB
+!! bag 仍是 .active, 需 rosbag reindex
+-rw-rw-r--  1 uavg uavg  50290688 Aug 27 11:39 0827_drone5.bag.active
+-rw-rw-r--  1 uavg uavg  62337678 Aug  8 21:22 scene3.bag
+Traceback (most recent call last):
+  File "/home/ntuicg/mission_run.py", line 423, in <module>
+    main()
+    ~~~~^^
+  File "/home/ntuicg/mission_run.py", line 379, in main
+    rc, interrupted = run_leg(pick, station, False, a.interruptible, state,
+                      ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                              a.feed, seen, statepath)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ntuicg/mission_run.py", line 192, in run_leg
+    return ssh("bash ~/run_one_can.sh %s %s %s" % (name, color, station), dry)[0], False
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ntuicg/mission_run.py", line 155, in ssh
+    p = subprocess.run(["ssh", "-o", "BatchMode=yes", "%s@%s" % (USER, CAR), cmd],
+                       capture_output=True, text=True, timeout=timeout)
+  File "/home/ntuicg/anaconda3/lib/python3.13/subprocess.py", line 556, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ntuicg/anaconda3/lib/python3.13/subprocess.py", line 1222, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ntuicg/anaconda3/lib/python3.13/subprocess.py", line 2128, in _communicate
+    ready = selector.select(timeout)
+  File "/home/ntuicg/anaconda3/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+KeyboardInterrupt

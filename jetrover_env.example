@@ -1,0 +1,8 @@
+# 复制成 ~/.jetrover_env 再填自己的地址：
+#     cp jetrover_env.example ~/.jetrover_env && chmod 600 ~/.jetrover_env
+# 之后 DHCP 换 IP 只改这一个文件，所有脚本自动跟着变。
+# 用 ${VAR:-默认} 形式，所以命令行临时覆盖优先：CAR_IP=10.0.0.5 bash code/ops/jetrover_up.sh
+
+export CAR_USER="${CAR_USER:-uavg}"          # 车上的登录用户名（JetRover 出厂即 uavg）
+export CAR_IP="${CAR_IP:-192.168.1.100}"     # 小车 IP
+export MY_IP="${MY_IP:-192.168.1.10}"        # 本机 IP，给 ROS_IP 用

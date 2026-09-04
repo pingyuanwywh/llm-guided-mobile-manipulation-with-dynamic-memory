@@ -1,0 +1,88 @@
+<!--
+  nav_hector_ekf.launch  —  hector + IMU/EKF 两段式定位 (2026-07-26)
+
+  和原来的 nav_hector.launch 的**唯一结构差别**是把位姿链拆成了两段:
+
+    原来:  map ══[hector 扫描匹配]══> base_footprint ──[static]──> laser
+           一条边由 hector 独占。扫描匹配逐帧独立求解、天然带噪声, 转动时最不准,
+           DWA 每周期读到的车头朝向就在抖 => 追噪声 => "一扭一扭"。
+
+    现在:  map ══[hector]══> odom ══[EKF]══> base_footprint ──[static]──> laser
+           odom->base : 高频/平滑/绝不跳/短期准/长期漂  <- 陀螺仪 + 指令速度
+           map->odom  : 低频/允许跳/长期准              <- hector 扫描匹配
+           这是 ROS 导航栈的标准分工(REP-105)。DWA 读到的朝向变化来自平滑的那一段,
+           hector 修正累积误差时跳的是另一段, 不再表现为车头抖。
+
+  ⚠️ 本 launch **不启动** imu_debias.py / cmd_odom.py / ekf_localization_node 的输入源,
+     它们由 ~/start_nav_ekf.sh 在 roslaunch 之前先起好(EKF 必须先于 hector 出 TF,
+     否则 hector 算 map->odom 时找不到 odom->base 会刷警告)。直接用本文件请先手动起那几个。
+
+  回退: 用回 ~/start_nav.sh (原 nav_hector.launch 一个字没动过)。
+
+  依赖(需先启动): board_node / rplidar / cmd_vel_to_motor.py
+  用法: roslaunch /home/uavg/nav_hector_ekf.launch
+-->
+<launch>
+  <arg name="use_teb" default="false"/>
+
+  <!-- hector 做扫描匹配时, 要不要拿 TF(=EKF 推算出来的当前位姿) 当起始猜测。
+       ❌ **实测必须保持 false**(2026-07-26, 全新地图上同一个 25 度原地转的对照):
+            use_odom_prior=true  -> 真实 +24.06 度, hector 只报 +13.31, **错 10.7 度**
+            use_odom_prior=false -> 真实 +25.13 度, hector 报 +25.45, 错 0.32 度
+          本意是"陀螺仪告诉 hector 我刚转了多少"帮它别跟丢, 实际是把 Gauss-Newton
+          带进了错误的局部解, **转得越快害得越狠**。八成是 TF 时间戳对不齐
+          (hector 按 scan 时间戳查 map->base, EKF 是 30Hz 另一套时间线)。
+       ⚠️ 关掉它**不影响治扭那一半好处** —— 那个只取决于 TF 树被拆成两段(DWA 读到的
+          位姿由 EKF 平滑), 与本开关无关。两个好处本来就是解耦的。 -->
+  <arg name="use_odom_prior" default="false"/>
+
+  <!-- 1) 静态TF: base_footprint 与 laser 重合 (原样照抄) -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_laser"
+        args="0 0 0 3.14159 0 0 base_footprint laser"/>
+
+  <!-- 2) EKF: 融合陀螺仪偏航角速度 + 指令速度, 发 odom->base_footprint -->
+  <node pkg="robot_localization" type="ekf_localization_node" name="ekf_odom" clear_params="true"
+        output="screen">
+    <rosparam command="load" file="/home/uavg/ekf.yaml"/>
+  </node>
+
+  <!-- 3) hector: 只发 map->odom 了 (odom_frame 从 base_footprint 改成 odom) -->
+  <node pkg="hector_mapping" type="hector_mapping" name="hector_mapping" output="screen">
+    <param name="map_frame"  value="map"/>
+    <param name="base_frame" value="base_footprint"/>
+    <param name="odom_frame" value="odom"/>              <!-- ★ 改动1: 原为 base_footprint -->
+    <param name="pub_map_odom_transform"        value="true"/>
+    <param name="pub_map_scanmatch_transform"   value="true"/>
+    <param name="scan_topic" value="scan"/>
+    <param name="use_tf_scan_transformation"  value="true"/>
+    <param name="use_tf_pose_start_estimate"  value="$(arg use_odom_prior)"/>  <!-- ★ 改动2: 原为 false -->
+
+    <!-- 以下与 nav_hector.launch 逐字相同 -->
+    <param name="map_resolution" value="0.025"/>
+    <param name="map_size"       value="1024"/>
+    <param name="map_start_x"    value="0.5"/>
+    <param name="map_start_y"    value="0.5"/>
+    <param name="map_multi_res_levels" value="2"/>
+    <param name="map_pub_period" value="0.5"/>
+
+    <param name="update_factor_free"          value="0.4"/>
+    <param name="update_factor_occupied"      value="0.9"/>
+    <param name="map_update_distance_thresh"  value="0.1"/>
+    <param name="map_update_angle_thresh"     value="0.06"/>
+
+    <param name="laser_min_dist" value="0.15"/>
+    <param name="laser_max_dist" value="12.0"/>
+    <param name="laser_z_min_value" value="-0.1"/>
+    <param name="laser_z_max_value" value="0.2"/>
+
+    <param name="advertise_map_service" value="true"/>
+    <param name="scan_subscriber_queue_size" value="5"/>
+  </node>
+
+  <!-- 4) move_base: 配置一个字没动。两个 costmap 的 global_frame 都是 map,
+       它们通过完整的 TF 链解析 base_footprint, 插入 odom 帧对它们透明。 -->
+  <include file="$(find navigation)/launch/include/move_base.launch">
+    <arg name="use_teb" value="$(arg use_teb)"/>
+  </include>
+
+</launch>

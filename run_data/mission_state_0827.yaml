@@ -1,0 +1,52 @@
+frame: map
+mode: free
+stations:
+  collect_a:
+    x: -3.6364
+    y: -4.0533
+  collect_b:
+    x: 4.8613
+    y: 0.4494
+robot:
+  x: -3.6364
+  y: -4.0533
+  holding: null
+  at: collect_a
+active: null
+cans:
+  can1:
+    x: -2.4419
+    y: -2.0642
+    color: green
+    source: manual
+    status: failed
+    attempts: 2
+    note: 未知退出码 255
+  can2:
+    x: -0.6581
+    y: -4.3665
+    color: red
+    source: manual
+    status: pending
+    attempts: 0
+  can3:
+    x: 0.4017
+    y: 0.0064
+    color: red
+    source: manual
+    status: pending
+    attempts: 0
+  can4:
+    x: 2.078
+    y: 2.1358
+    color: green
+    source: manual
+    status: pending
+    attempts: 0
+  can5:
+    x: 3.7892
+    y: 0.8088
+    color: red
+    source: manual
+    status: pending
+    attempts: 0

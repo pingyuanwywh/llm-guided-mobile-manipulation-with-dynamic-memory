@@ -1,0 +1,65 @@
+# ekf.yaml -- robot_localization 的 EKF 配置 (2026-07-26)
+#
+# 作用: 融合 [陀螺仪的偏航角速度] + [指令速度航位推算的 vx/vy], 输出 odom->base_footprint
+#       这一段**高频、平滑、绝不跳**的变换。hector 则负责 map->odom(低频、允许跳、长期准)。
+#       DWA 读到的车头朝向因此变平滑 => 不再追扫描匹配的逐帧噪声 => 治"一扭一扭"。
+#
+# ⚠️ 这里**不做绝对定位**: world_frame=odom 意味着 EKF 只管"相对起点走了多少",
+#    绝对位置仍然是 hector 的活。把 world_frame 改成 map 会和 hector 抢同一条 TF 边, 必炸。
+
+frequency: 30                 # 输出 TF 的频率
+sensor_timeout: 0.5           # 某一路超过这么久没数据就先靠模型预测顶着
+two_d_mode: true              # 车在平地上跑: 强制 z/roll/pitch 及其速度为 0,
+                              # 少 6 个自由度 = 状态更稳、也不会被 IMU 的横滚俯仰噪声带歪
+transform_time_offset: 0.0
+transform_timeout: 0.0
+print_diagnostics: true
+publish_tf: true
+publish_acceleration: false
+
+map_frame: map
+odom_frame: odom
+base_link_frame: base_footprint
+world_frame: odom             # <== 关键: 只出 odom->base, 不碰 map->odom
+
+# ---------------------------------------------------------------
+# 第 0 路: 指令速度航位推算 (cmd_odom.py)
+# 15 个开关的顺序永远是:
+#   x     y     z        <- 位置
+#   roll  pitch yaw      <- 姿态
+#   vx    vy    vz       <- 线速度
+#   vroll vpitch vyaw    <- 角速度
+#   ax    ay    az       <- 线加速度
+# 这一路只有 vx/vy 可信 —— 位置是 EKF 自己积出来的, 偏航交给陀螺仪。
+# ---------------------------------------------------------------
+odom0: /odom_cmd
+odom0_config: [false, false, false,
+               false, false, false,
+               true,  true,  false,
+               false, false, false,
+               false, false, false]
+odom0_queue_size: 10
+odom0_differential: false
+odom0_relative: false
+
+# ---------------------------------------------------------------
+# 第 1 路: 去零偏后的 IMU (imu_debias.py)
+# **只勾 vyaw 一个**。理由:
+#   - 姿态(yaw): 板子无磁力计, orientation 恒为全 0 的假数据, 勾了会把车头拽向 0。
+#     imu_debias 已把 orientation_covariance[0] 设成 -1 做了第一道保险, 这里是第二道。
+#   - 加速度(ax/ay): 双积分算位移会飞, 位移那一维交给 odom0。
+#   - vroll/vpitch: two_d_mode 下本来就不用。
+# ---------------------------------------------------------------
+imu0: /imu/data
+imu0_config: [false, false, false,
+              false, false, false,
+              false, false, false,
+              false, false, true,
+              false, false, false]
+imu0_queue_size: 20
+imu0_differential: false
+imu0_relative: false
+imu0_remove_gravitational_acceleration: true   # 不启用加速度, 留着无害
+
+# 过程噪声: 不写就用 robot_localization 的默认值, 默认对这个体量的车够用。
+# 如果实测发现朝向还是跟不上快速转动, 调大 yaw(第6个对角元)那一项让 EKF 更信测量。

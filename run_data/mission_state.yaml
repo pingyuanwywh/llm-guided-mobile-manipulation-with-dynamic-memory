@@ -1,0 +1,31 @@
+frame: map
+mode: single
+stations:
+  collect:
+    x: -1.169
+    y: -1.136
+robot:
+  x: -1.169
+  y: -1.136
+  holding: null
+  at: collect
+active: null
+cans:
+  can4:
+    x: 2.362
+    y: -1.436
+    color: red
+    source: drone
+    status: collected
+    attempts: 1
+    seen_at: '15:00:12'
+    station: collect
+  can6:
+    x: 1.0202
+    y: -1.322
+    color: red
+    source: drone
+    status: collected
+    attempts: 1
+    seen_at: '15:00:20'
+    station: collect

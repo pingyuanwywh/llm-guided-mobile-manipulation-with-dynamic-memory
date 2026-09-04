@@ -1,0 +1,56 @@
+frame: map
+mode: free
+stations:
+  collect_a:
+    x: -4.249
+    y: 0.178
+  collect_b:
+    x: 0.003
+    y: 0.003
+robot:
+  x: -3.160
+  y: 1.359
+  holding: null
+  at: null
+active: null
+cans:
+  can1:
+    x: -0.651
+    y: -0.782
+    color: red
+    source: manual
+    status: pending
+    attempts: 0
+    station: collect_a
+  can2:
+    x: -1.062
+    y: 1.094
+    color: green
+    source: manual
+    status: pending
+    attempts: 0
+    station: collect_b
+  can3:
+    x: -2.765
+    y: 1.057
+    color: red
+    source: manual
+    status: pending
+    attempts: 0
+    station: collect_b
+  can4:
+    x: -3.238
+    y: 2.157
+    color: red
+    source: manual
+    status: pending
+    attempts: 0
+    station: collect_a
+  can5:
+    x: -2.642
+    y: -0.980
+    color: red
+    source: manual
+    status: pending
+    attempts: 0
+    station: collect_a

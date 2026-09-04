@@ -1,0 +1,29 @@
+<launch>
+  <!-- TEB 对照实验用 (2026-07-28)。
+       目的: 同一条腿、同一个 base_footprint 修正, 只把局部规划器从 DWA 换成 TEB,
+       看"扭"的变号率会不会掉。
+       ros1_ws 里的 teb_local_planner_params.yaml 一个字没动 —— 下面的 rosparam 在
+       include 之后覆盖, roslaunch 会先把所有参数传上参数服务器再起节点, 所以覆盖生效。
+       两个覆盖的理由:
+         max_vel_x   0.4 -> 0.15  仓库里 TEB 的默认比 DWA 快 2.7 倍, 不限速就不是对照实验
+                                  (而且小场地里 0.4m/s 不安全)
+         max_vel_theta 2.0 -> 0.25 同上
+         yaw_goal_tolerance 0.15 -> 3.14  DWA 那边是 3.14(到点不管朝向)。不放开的话 TEB
+                                  会在终点做原地转, 既污染变号率指标, 又触发旋转位移。
+  -->
+  <include file="/home/uavg/nav_hector_bfc.launch">
+    <arg name="use_teb" value="true"/>
+  </include>
+
+  <!-- move_base.launch 里那句 $(eval ... if arg('use_teb')=='true' ...) 实测没生效
+       (传 use_teb:=true 之后 /move_base/base_local_planner 仍是 DWA), 所以直接钉死插件名。 -->
+  <rosparam ns="move_base">
+    base_local_planner: teb_local_planner/TebLocalPlannerROS
+  </rosparam>
+
+  <rosparam ns="move_base/TebLocalPlannerROS">
+    max_vel_x: 0.15
+    max_vel_theta: 0.25
+    yaw_goal_tolerance: 3.14
+  </rosparam>
+</launch>

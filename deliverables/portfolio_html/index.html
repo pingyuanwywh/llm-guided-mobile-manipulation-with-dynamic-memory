@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>平原 · JetRover 作品集 — 从米级先验到厘米级抓取</title>
+<style>
+/* ============================================================
+   JetRover Portfolio · Swiss International (guizang Style B)
+   主题色: 克莱因蓝 IKB #002FA7 · 单文件 · 横向翻页 · 八屏
+   ============================================================ */
+:root{
+  --ikb:#002FA7;          /* 克莱因蓝 IKB — 唯一强调色 */
+  --ikb-tint:#E7ECF7;
+  --ink:#111014;          /* 近黑正文 */
+  --paper:#F3F2ED;        /* 暖近白纸面 */
+  --card:#FFFFFF;
+  --muted:#6E6C66;        /* 次级灰字 */
+  --faint:#B7B4AB;        /* 弱化灰 */
+  --hair:#D9D6CE;         /* 细分割线 */
+  --red:#D8261C;          /* 仅用于「证伪 / 被否决」的反证 */
+  --gray-panel:#E6E4DD;   /* 被否决面板底 */
+  font-synthesis:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"Helvetica Neue",Helvetica,"Arial Nova",Arial,
+    "PingFang SC","Hiragino Sans GB","Source Han Sans SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  overflow:hidden;
+}
+.num,.tnum{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+
+/* ---------- 横向翻页容器 ---------- */
+.deck{
+  display:flex;
+  width:100vw;height:100vh;
+  overflow-x:auto;overflow-y:hidden;
+  scroll-snap-type:x mandatory;
+  scroll-behavior:smooth;
+  scrollbar-width:none;
+}
+.deck::-webkit-scrollbar{display:none}
+.slide{
+  flex:0 0 100vw;width:100vw;height:100vh;
+  scroll-snap-align:start;scroll-snap-stop:always;
+  position:relative;overflow:hidden;display:flex;
+}
+.pad{
+  width:100%;height:100%;
+  padding:clamp(26px,5.4vh,58px) clamp(34px,5.6vw,104px);
+  display:flex;flex-direction:column;
+  min-height:0;
+}
+
+/* ---------- 通用排版 ---------- */
+.kicker{
+  display:flex;justify-content:space-between;align-items:baseline;
+  font-size:clamp(.6rem,.78vw,.74rem);
+  letter-spacing:.24em;text-transform:uppercase;color:var(--muted);
+  padding-bottom:clamp(8px,1.4vh,14px);
+  border-bottom:1.5px solid var(--ink);
+  flex:0 0 auto;
+}
+.kicker b{color:var(--ikb);font-weight:800}
+.kicker .idx{color:var(--ink);font-weight:800;letter-spacing:.1em}
+.h1{
+  font-weight:800;line-height:1.02;letter-spacing:-.015em;
+  font-size:clamp(1.5rem,3.35vw,2.9rem);margin:0;
+}
+.h1 .accent{color:var(--ikb)}
+.lead{
+  font-size:clamp(.86rem,1.28vw,1.12rem);line-height:1.5;color:var(--ink);
+  font-weight:400;max-width:60ch;margin:0;
+}
+.sub{font-size:clamp(.8rem,1.1vw,1rem);line-height:1.45;color:var(--muted);font-weight:400;margin:0}
+.small{font-size:clamp(.64rem,.86vw,.78rem);line-height:1.5;color:var(--muted)}
+.eyebrow{font-size:clamp(.6rem,.78vw,.72rem);letter-spacing:.2em;text-transform:uppercase;color:var(--ikb);font-weight:800}
+.hair{height:1px;background:var(--hair);border:0;margin:0}
+.grow{flex:1 1 auto;min-height:0}
+.mono{font-family:"SFMono-Regular",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace}
+.strike{text-decoration:line-through;text-decoration-color:var(--red);text-decoration-thickness:2px;color:var(--faint)}
+.foot{flex:0 0 auto;padding-top:clamp(8px,1.4vh,14px);border-top:1px solid var(--hair)}
+
+/* chips / tags */
+.chip{display:inline-flex;align-items:center;gap:.5em;font-weight:800;
+  font-size:clamp(.66rem,.9vw,.82rem);letter-spacing:.02em;padding:.3em .7em;line-height:1}
+.chip--bad{background:var(--gray-panel);color:var(--muted)}
+.chip--good{background:var(--ikb);color:#fff}
+.tag{display:inline-block;font-size:clamp(.58rem,.78vw,.7rem);letter-spacing:.06em;
+  border:1.2px solid var(--ink);padding:.22em .5em;font-weight:700}
+.tag--ikb{border-color:var(--ikb);color:var(--ikb)}
+
+/* 大字报 数据 */
+.stat-num{font-weight:800;line-height:.88;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+.stat-lbl{font-size:clamp(.62rem,.84vw,.76rem);color:var(--muted);letter-spacing:.02em;line-height:1.3}
+
+/* ============================================================
+   固定 UI: 进度条 / 页码点 / 前后翻页
+   ============================================================ */
+.progress{position:fixed;top:0;left:0;height:3px;background:var(--ikb);width:0;z-index:60;
+  transition:width .35s ease}
+.dots{position:fixed;left:50%;bottom:clamp(12px,2.2vh,22px);transform:translateX(-50%);
+  display:flex;gap:9px;z-index:60}
+.dots button{appearance:none;border:0;padding:0;cursor:pointer;background:transparent}
+.dots .dot{width:9px;height:9px;background:transparent;border:1.4px solid var(--ink);
+  border-radius:0;transition:all .25s}
+.dots button[aria-current="true"] .dot{background:var(--ikb);border-color:var(--ikb);transform:scale(1.15)}
+.nav-arrow{position:fixed;bottom:clamp(12px,2.2vh,22px);z-index:60;appearance:none;border:0;
+  background:transparent;color:var(--ink);cursor:pointer;font-size:1.2rem;font-weight:800;
+  padding:.2em .5em;opacity:.5;transition:opacity .2s}
+.nav-arrow:hover{opacity:1}
+.nav-arrow.prev{left:clamp(18px,3vw,40px)}
+.nav-arrow.next{right:clamp(18px,3vw,40px)}
+.hint{position:fixed;right:clamp(18px,3vw,40px);top:clamp(14px,2.4vh,24px);z-index:60;
+  font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+  display:flex;gap:.5em;align-items:center}
+.hint kbd{border:1.2px solid var(--hair);border-bottom-width:2px;padding:.05em .4em;border-radius:3px;
+  font-family:inherit;font-size:.62rem;background:var(--card)}
+
+/* ============================================================
+   S1 · 封面
+   ============================================================ */
+.cover{display:grid;grid-template-rows:auto 1fr auto;gap:clamp(14px,2.2vh,26px);height:100%}
+.video-slot{
+  position:relative;height:clamp(150px,40vh,400px);aspect-ratio:16/9;max-width:100%;
+  border:2px dashed var(--ikb);background:
+    repeating-linear-gradient(-45deg,transparent 0 22px,rgba(0,47,167,.035) 22px 44px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.7em;
+  color:var(--ikb);
+}
+.video-slot .play{width:clamp(38px,5vw,58px);height:clamp(38px,5vw,58px);border-radius:50%;
+  border:2px solid var(--ikb);display:flex;align-items:center;justify-content:center}
+.video-slot .play::after{content:"";border-left:clamp(13px,1.7vw,19px) solid var(--ikb);
+  border-top:clamp(9px,1.15vw,13px) solid transparent;border-bottom:clamp(9px,1.15vw,13px) solid transparent;
+  margin-left:.28em}
+.video-slot .vs-cap{font-size:clamp(.68rem,.95vw,.86rem);font-weight:800;letter-spacing:.06em}
+.video-slot .vs-sub{font-size:clamp(.58rem,.78vw,.7rem);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted)}
+.cover-title{font-weight:800;line-height:.98;letter-spacing:-.02em;
+  font-size:clamp(2rem,5.4vw,4.6rem);margin:0}
+.cover-title .accent{color:var(--ikb)}
+.cover-sub{font-size:clamp(.9rem,1.55vw,1.35rem);color:var(--ink);font-weight:400;margin:.55em 0 0;line-height:1.35}
+.cover-by{font-size:clamp(.7rem,.98vw,.9rem);color:var(--muted);margin:.5em 0 0;letter-spacing:.02em}
+.cover-stats{display:flex;gap:clamp(28px,4vw,64px);align-items:flex-end}
+.cover-stats .s .stat-num{font-size:clamp(2rem,4vw,3.4rem);color:var(--ikb)}
+.cover-stats .s .stat-lbl{margin-top:.35em}
+.cover-stats .div{width:1px;align-self:stretch;background:var(--hair)}
+
+/* ============================================================
+   S2 · 问题设定 — 精度阶梯
+   ============================================================ */
+.s2{display:grid;grid-template-columns:1.05fr 1fr;gap:clamp(30px,5vw,80px);align-items:center;height:100%}
+.ladder{display:flex;flex-direction:column;gap:clamp(10px,1.6vh,18px)}
+.rung{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:1em;
+  padding-bottom:clamp(8px,1.3vh,14px);border-bottom:1.5px solid var(--ink)}
+.rung .lbl{font-size:clamp(.8rem,1.05vw,1rem);font-weight:600}
+.rung .val{font-weight:800;font-size:clamp(1.15rem,2.1vw,1.9rem);white-space:nowrap;font-variant-numeric:tabular-nums}
+.rung--hi .val{color:var(--ikb)}
+.rung--hi{border-color:var(--ikb)}
+.rung .tiny{display:block;font-size:.7em;color:var(--muted);font-weight:400;letter-spacing:.03em}
+
+/* ============================================================
+   S3 · 架构
+   ============================================================ */
+.s3{display:grid;grid-template-columns:1.15fr 1fr;gap:clamp(24px,3.6vw,58px);height:100%;min-height:0}
+.arch-wrap{display:flex;align-items:center;justify-content:center;min-height:0}
+.arch-wrap svg{width:100%;height:100%;max-height:100%}
+.s3-notes{display:flex;flex-direction:column;gap:clamp(10px,1.7vh,20px);justify-content:center;min-height:0}
+.note{border-left:3px solid var(--ikb);padding-left:.9em}
+.note h4{margin:0 0 .3em;font-size:clamp(.74rem,1vw,.92rem);font-weight:800}
+.note p{margin:0;font-size:clamp(.68rem,.9vw,.82rem);line-height:1.42;color:var(--muted)}
+.note.dashed{border-left-style:dashed;border-color:var(--red)}
+.hw{font-size:clamp(.64rem,.86vw,.78rem);color:var(--muted);letter-spacing:.02em}
+.hw b{color:var(--ink);font-weight:800}
+
+/* ============================================================
+   S4 / S5 · 核心 — 最重版式
+   ============================================================ */
+.core{display:grid;height:100%;min-height:0}
+.s4{grid-template-columns:0.92fr 1.15fr;gap:clamp(24px,3.4vw,54px)}
+.s4 .left{display:flex;flex-direction:column;gap:clamp(12px,1.9vh,22px);min-height:0}
+.s4 .right{display:grid;grid-template-rows:1.25fr auto;gap:clamp(14px,2vh,24px);min-height:0}
+.detour{background:var(--gray-panel);padding:clamp(12px,1.7vh,18px) clamp(14px,1.5vw,20px)}
+.detour .d-h{font-size:clamp(.62rem,.82vw,.74rem);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--red);font-weight:800;margin-bottom:.5em}
+.detour p{margin:.35em 0;font-size:clamp(.7rem,.92vw,.84rem);line-height:1.4;color:var(--muted)}
+.turn{font-size:clamp(1rem,1.6vw,1.5rem);font-weight:800;line-height:1.15}
+.turn .accent{color:var(--ikb)}
+
+/* Before/After 双面板 */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:clamp(10px,1.2vw,16px);min-height:0}
+.ba-panel{border:1.5px solid var(--ink);display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.ba-panel--bad{border-color:var(--faint);background:#EDEBE4}
+.ba-panel--good{border-color:var(--ikb)}
+.ba-head{padding:.5em .7em;display:flex;justify-content:space-between;align-items:center;gap:.5em;
+  font-size:clamp(.6rem,.8vw,.72rem);letter-spacing:.04em;font-weight:700;border-bottom:1.5px solid currentColor}
+.ba-panel--bad .ba-head{color:var(--muted);border-color:var(--faint)}
+.ba-panel--good .ba-head{color:var(--ikb);border-color:var(--ikb)}
+.ba-body{flex:1 1 auto;min-height:0;padding:clamp(6px,1vh,12px)}
+.ba-body svg{width:100%;height:100%}
+
+/* 大字报三连 */
+.dazi{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(12px,1.6vw,24px);align-items:end}
+.dazi .d{border-top:2.5px solid var(--ikb);padding-top:.5em}
+.dazi .d .stat-num{font-size:clamp(2rem,4.4vw,3.9rem);color:var(--ink)}
+.dazi .d .stat-num .u{font-size:.42em;color:var(--muted);font-weight:700;letter-spacing:0}
+.dazi .d.hero .stat-num{color:var(--ikb)}
+.dazi .d .stat-lbl{margin-top:.5em}
+
+/* S5 */
+.s5{grid-template-rows:auto 1fr auto;gap:clamp(12px,1.9vh,20px)}
+.s5-mid{display:grid;grid-template-columns:1.1fr 1fr;gap:clamp(20px,3vw,46px);min-height:0}
+/* 判据大字报 (63/250/418) */
+.crit{display:flex;flex-direction:column;gap:clamp(8px,1.3vh,14px);justify-content:center}
+.crit .row{display:grid;grid-template-columns:auto 1fr;align-items:baseline;gap:1em;
+  border-bottom:1px solid var(--hair);padding-bottom:.4em}
+.crit .row .n{font-weight:800;font-size:clamp(1.5rem,3vw,2.7rem);font-variant-numeric:tabular-nums;
+  width:2.6em;text-align:right}
+.crit .row.hero .n{color:var(--ikb)}
+.crit .row .m{font-size:clamp(.74rem,1vw,.94rem);font-weight:600}
+.crit .row .m span{display:block;font-size:.72em;color:var(--muted);font-weight:400}
+.crit .cap{font-size:clamp(.6rem,.8vw,.72rem);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.ba-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:.4em;
+  font-size:clamp(.66rem,.88vw,.8rem);line-height:1.35}
+.ba-list li{padding-left:1em;position:relative;color:var(--muted)}
+.ba-list li::before{content:"—";position:absolute;left:0;color:currentColor}
+.ba-panel--good .ba-list li{color:var(--ink)}
+.cases{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(12px,1.5vw,22px)}
+.case{border-top:2px solid var(--ink);padding-top:.55em}
+.case .c-h{font-weight:800;font-size:clamp(.72rem,.96vw,.88rem);margin-bottom:.25em}
+.case .c-h .k{color:var(--ikb)}
+.case p{margin:0;font-size:clamp(.64rem,.84vw,.76rem);line-height:1.4;color:var(--muted)}
+
+/* ============================================================
+   S6 · 左右对照
+   ============================================================ */
+.s6{display:grid;grid-template-rows:auto 1fr;gap:clamp(14px,2.2vh,26px);height:100%;min-height:0}
+.cmp{display:grid;grid-template-columns:1fr 1fr;min-height:0;border:1.5px solid var(--ink)}
+.cmp .col{display:flex;flex-direction:column;min-height:0}
+.cmp .col.sim{background:var(--gray-panel)}
+.cmp .col.real{background:var(--card);border-left:1.5px solid var(--ink)}
+.cmp .col-h{padding:.7em 1em;font-weight:800;font-size:clamp(.78rem,1.05vw,1rem);
+  display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5px solid var(--ink)}
+.cmp .col.sim .col-h{color:var(--muted)}
+.cmp .col.real .col-h{color:var(--ikb)}
+.cmp .col-h .t{font-size:.7em;font-weight:600;letter-spacing:.06em}
+.cmp .rows{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+.cmp .r{flex:1 1 0;display:flex;flex-direction:column;justify-content:center;gap:.15em;
+  padding:.55em 1em;border-bottom:1px solid var(--hair)}
+.cmp .r:last-child{border-bottom:0}
+.cmp .r .role{font-size:clamp(.58rem,.76vw,.68rem);letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:700}
+.cmp .r .v{font-size:clamp(.74rem,1vw,.92rem);font-weight:600;line-height:1.25}
+.cmp .col.real .r.key .v{color:var(--ikb);font-weight:800}
+.cmp .col.sim .r.key .v{color:var(--red)}
+.s6-note{display:grid;grid-template-columns:auto 1fr;gap:clamp(16px,2.4vw,40px);align-items:center}
+.s6-note ul{margin:.2em 0 0;padding-left:1.1em;font-size:clamp(.66rem,.88vw,.8rem);line-height:1.5;color:var(--muted)}
+.s6-note ul b{color:var(--ink)}
+.watershed{font-size:clamp(.92rem,1.5vw,1.4rem);font-weight:800;line-height:1.2;max-width:16ch}
+.watershed .accent{color:var(--ikb)}
+
+/* ============================================================
+   S7 · 边界与下一步
+   ============================================================ */
+.s7{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,3.6vw,58px);height:100%;min-height:0}
+.s7 .col{display:flex;flex-direction:column;gap:clamp(10px,1.6vh,18px);min-height:0}
+.limits{width:100%;border-collapse:collapse;font-size:clamp(.64rem,.86vw,.78rem)}
+.limits td{padding:.42em .2em;border-bottom:1px solid var(--hair);vertical-align:top}
+.limits td:first-child{font-weight:700;white-space:nowrap;width:6.5em;color:var(--ink)}
+.limits td:last-child{color:var(--muted);line-height:1.35}
+.limits tr.key td:last-child{color:var(--ink)}
+.steps{list-style:none;margin:0;padding:0;counter-reset:st;display:flex;flex-direction:column;gap:.5em}
+.steps li{position:relative;padding-left:2.1em;font-size:clamp(.7rem,.92vw,.84rem);line-height:1.4;color:var(--ink)}
+.steps li::before{counter-increment:st;content:counter(st,decimal-leading-zero);
+  position:absolute;left:0;top:0;font-weight:800;color:var(--ikb);font-variant-numeric:tabular-nums;
+  font-size:.9em;letter-spacing:.05em}
+.steps li.hero{font-weight:700}
+.steps li.hero b{color:var(--ikb)}
+.bignum{display:flex;align-items:baseline;gap:.5em}
+.bignum .stat-num{font-size:clamp(2.4rem,5vw,4.4rem);color:var(--ikb)}
+.bignum .stat-num .u{font-size:.42em;color:var(--muted);font-weight:700}
+.stack{font-size:clamp(.62rem,.82vw,.74rem);color:var(--muted);line-height:1.5}
+
+/* ============================================================
+   S8 · 联系
+   ============================================================ */
+.s8{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(30px,5vw,80px);height:100%;align-items:center}
+.s8 .big{font-weight:800;font-size:clamp(2.4rem,6vw,5rem);line-height:.95;letter-spacing:-.02em;margin:0}
+.s8 .big .accent{color:var(--ikb)}
+.contact{list-style:none;margin:clamp(18px,3vh,34px) 0 0;padding:0;display:flex;flex-direction:column;gap:.7em}
+.contact li{display:grid;grid-template-columns:6.5em 1fr;align-items:baseline;
+  border-bottom:1.5px solid var(--ink);padding-bottom:.5em;gap:1em}
+.contact .k{font-size:clamp(.62rem,.82vw,.74rem);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.contact .v{font-size:clamp(.82rem,1.15vw,1.05rem);font-weight:600}
+.contact .v.ph{color:var(--faint);font-weight:400}
+.recap{border-left:3px solid var(--ikb);padding-left:1.1em;display:flex;flex-direction:column;gap:.9em}
+.recap .step{font-size:clamp(.78rem,1.15vw,1.05rem);line-height:1.35}
+.recap .step .n{color:var(--ikb);font-weight:800;margin-right:.5em}
+.recap .step b{font-weight:800}
+.closing{font-size:clamp(.82rem,1.1vw,1rem);color:var(--ink);margin-top:clamp(16px,2.6vh,30px);font-weight:600}
+
+/* ============================================================
+   响应式: 窄屏 / 竖屏回退为纵向滚动
+   ============================================================ */
+@media (max-width:820px), (max-aspect-ratio:1/1){
+  body{overflow:auto}
+  .deck{display:block;width:100%;height:auto;overflow:visible;scroll-snap-type:none}
+  .slide{width:100%;height:auto;min-height:100vh}
+  .cover,.s2,.s3,.s4,.s6,.s7,.s8,.s5-mid,.core{grid-template-columns:1fr!important;grid-template-rows:none!important}
+  .ba,.dazi,.cases,.cmp{grid-template-columns:1fr!important}
+  .cmp .col.real{border-left:0;border-top:1.5px solid var(--ink)}
+  .progress,.dots,.nav-arrow,.hint{display:none}
+}
+
+/* ============================================================
+   打印: 每屏一页 (导出 PDF)
+   ============================================================ */
+@media print{
+  body{overflow:visible}
+  .deck{display:block;height:auto;overflow:visible}
+  .slide{width:100%;height:100vh;page-break-after:always;break-after:page}
+  .progress,.dots,.nav-arrow,.hint{display:none!important}
+}
+@media (prefers-reduced-motion:reduce){.deck{scroll-behavior:auto}.progress{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="hint" id="hint"><kbd>←</kbd><kbd>→</kbd> 翻页</div>
+
+<div class="deck" id="deck">
+
+  <!-- ============ 1 · 封面 ============ -->
+  <section class="slide" id="s1">
+    <div class="pad">
+      <div class="cover">
+        <!-- ▼▼▼ 16:9 视频槽位 · 15″ 真机循环演示。替换下面占位为你的视频/GIF ▼▼▼ -->
+        <div class="video-slot" role="img" aria-label="15 秒真机演示视频槽位">
+          <!-- 嵌入方式(二选一,删掉本占位即可):
+               <video src="demo.mp4" autoplay loop muted playsinline
+                      style="width:100%;height:100%;object-fit:cover"></video>
+               <img src="demo.gif" alt="真机演示" style="width:100%;height:100%;object-fit:cover">      -->
+          <div class="play" aria-hidden="true"></div>
+          <div class="vs-cap">15″ 真机循环演示</div>
+          <div class="vs-sub">终端一句自然语言 → 自主导航 → 横向对准 → 下探抓取</div>
+        </div>
+        <!-- ▲▲▲ 这是整份作品集最重要的元素,优先级高于所有文字 ▲▲▲ -->
+        <div>
+          <h1 class="cover-title">从米级先验<br>到<span class="accent">厘米级抓取</span></h1>
+          <p class="cover-sub">空地协同场景下的移动机械臂闭环系统</p>
+          <p class="cover-by">平原 · 南洋理工大学 机械工程硕士 · 2026</p>
+        </div>
+        <div class="cover-stats">
+          <div class="s">
+            <div class="stat-num num">5<span style="color:var(--faint)">/</span>5</div>
+            <div class="stat-lbl">真机多目标导航 demo</div>
+          </div>
+          <div class="div"></div>
+          <div class="s">
+            <div class="stat-num num">10<span style="color:var(--faint)">/</span>11</div>
+            <div class="stat-lbl">视觉逼近环收敛</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2 · 问题设定 ============ -->
+  <section class="slide" id="s2">
+    <div class="pad">
+      <div class="kicker"><span>The Problem · 问题设定</span><span class="idx">02 / 08</span></div>
+      <div class="s2 grow">
+        <div>
+          <h2 class="h1">精度落差不是缺陷,<br>是这个场景的<span class="accent">固有约束</span></h2>
+          <p class="lead" style="margin-top:1.1em">目标场景是空地协同:无人机在空中给出目标的<b>粗略位置(米级)</b>,小车负责地面的<b>精确执行(厘米级)</b>。</p>
+          <p class="lead" style="margin-top:.9em">导航能把车送到目标附近,却送不进抓取窗口。<b style="color:var(--ikb)">这中间缺一层 —— 本项目的核心工作,就是设计这一层。</b></p>
+        </div>
+        <div>
+          <div class="eyebrow" style="margin-bottom:1em">落差在哪</div>
+          <div class="ladder">
+            <div class="rung"><span class="lbl">UAV 位置先验</span><span class="val">米级</span></div>
+            <div class="rung"><span class="lbl">地面导航交付</span><span class="val">±10 cm</span></div>
+            <div class="rung rung--hi">
+              <span class="lbl">抓取捕获窗口<span class="tiny">罐子必须落进这个窗口才抓得到</span></span>
+              <span class="val">23 × 8 cm</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3 · 系统架构 (SVG) ============ -->
+  <section class="slide" id="s3">
+    <div class="pad">
+      <div class="kicker"><span>Architecture · 系统架构</span><span class="idx">03 / 08</span></div>
+      <h2 class="h1" style="margin:clamp(10px,1.8vh,20px) 0 0">一条<span class="accent">下行</span>通路,一个正交的<span class="accent">验证</span>信号</h2>
+      <div class="s3 grow" style="margin-top:clamp(8px,1.4vh,16px)">
+        <div class="arch-wrap">
+          <svg viewBox="0 0 560 600" preserveAspectRatio="xMidYMid meet" role="img"
+               aria-label="五层纵向架构图:Translator、Grounding、Skill Layer、Verifier、Memory 之间实线下行;Verifier 到 Translator 一条虚线上行箭头,标注下一步、上行通路未接">
+            <defs>
+              <marker id="down" markerWidth="10" markerHeight="10" refX="5" refY="8" orient="auto">
+                <path d="M1,1 L5,8 L9,1" fill="none" stroke="#111014" stroke-width="1.6"/>
+              </marker>
+              <marker id="up" markerWidth="11" markerHeight="11" refX="5.5" refY="2.5" orient="auto">
+                <path d="M1,9 L5.5,2 L10,9" fill="none" stroke="#002FA7" stroke-width="1.8"/>
+              </marker>
+            </defs>
+            <!-- 下行通路标签 -->
+            <text x="14" y="300" transform="rotate(-90 14 300)" font-family="Helvetica,Arial,sans-serif"
+                  font-size="11" letter-spacing="3" fill="#6E6C66">下行通路 · 已接</text>
+
+            <!-- 连接实线(先画,压在盒子下) -->
+            <g stroke="#111014" stroke-width="1.6" marker-end="url(#down)">
+              <line x1="205" y1="96"  x2="205" y2="120"/>
+              <line x1="205" y1="206" x2="205" y2="230"/>
+              <line x1="205" y1="316" x2="205" y2="340"/>
+              <line x1="205" y1="426" x2="205" y2="450"/>
+            </g>
+
+            <!-- 五层盒子 -->
+            <!-- 1 Translator -->
+            <g>
+              <rect x="45" y="20" width="320" height="76" fill="#fff" stroke="#111014" stroke-width="1.6"/>
+              <text x="62" y="48" font-family="Helvetica,Arial,sans-serif" font-size="16" font-weight="700" fill="#111014">TRANSLATOR</text>
+              <text x="62" y="70" font-family="Helvetica,Arial,sans-serif" font-size="12.5" fill="#111014">自然语言 → 结构化命令</text>
+              <text x="62" y="86" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#6E6C66">Qwen-2.5 · Ollama structured outputs</text>
+            </g>
+            <!-- 2 Grounding ★ -->
+            <g>
+              <rect x="45" y="130" width="320" height="76" fill="#002FA7" stroke="#002FA7" stroke-width="1.6"/>
+              <text x="62" y="158" font-family="Helvetica,Arial,sans-serif" font-size="16" font-weight="700" fill="#fff">GROUNDING ★</text>
+              <text x="62" y="180" font-family="Helvetica,Arial,sans-serif" font-size="12.5" fill="#fff">符号目标 → 物理坐标</text>
+              <text x="62" y="196" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#CBD8F2">approach.py + measure 服务</text>
+            </g>
+            <!-- 3 Skill Layer -->
+            <g>
+              <rect x="45" y="240" width="320" height="76" fill="#fff" stroke="#111014" stroke-width="1.6"/>
+              <text x="62" y="268" font-family="Helvetica,Arial,sans-serif" font-size="16" font-weight="700" fill="#111014">SKILL LAYER</text>
+              <text x="62" y="290" font-family="Helvetica,Arial,sans-serif" font-size="12.5" fill="#111014">技能执行</text>
+              <text x="62" y="306" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#6E6C66">move_base / grab / place</text>
+            </g>
+            <!-- 4 Verifier ★ -->
+            <g>
+              <rect x="45" y="350" width="320" height="76" fill="#002FA7" stroke="#002FA7" stroke-width="1.6"/>
+              <text x="62" y="378" font-family="Helvetica,Arial,sans-serif" font-size="16" font-weight="700" fill="#fff">VERIFIER ★</text>
+              <text x="62" y="400" font-family="Helvetica,Arial,sans-serif" font-size="12.5" fill="#fff">执行结果判定</text>
+              <text x="62" y="416" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#CBD8F2">夹爪舵机回读</text>
+            </g>
+            <!-- 5 Memory -->
+            <g>
+              <rect x="45" y="460" width="320" height="76" fill="#fff" stroke="#111014" stroke-width="1.6"/>
+              <text x="62" y="488" font-family="Helvetica,Arial,sans-serif" font-size="16" font-weight="700" fill="#111014">MEMORY</text>
+              <text x="62" y="510" font-family="Helvetica,Arial,sans-serif" font-size="12.5" fill="#111014">任务状态</text>
+              <text x="62" y="526" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#6E6C66">visited 落盘</text>
+            </g>
+
+            <!-- 虚线上行箭头 Verifier → Translator (下一步 · 上行通路未接) -->
+            <path d="M365,388 L470,388 L470,58 L365,58"
+                  fill="none" stroke="#002FA7" stroke-width="2" stroke-dasharray="7 6"
+                  marker-end="url(#up)"/>
+            <g font-family="Helvetica,Arial,sans-serif">
+              <text x="486" y="220" transform="rotate(-90 486 220)" font-size="14" font-weight="700"
+                    letter-spacing="2" fill="#002FA7">下一步</text>
+              <text x="504" y="250" transform="rotate(-90 504 250)" font-size="10.5"
+                    letter-spacing="1.5" fill="#6E6C66">上行通路 · 未接</text>
+            </g>
+
+            <!-- ★ 图例 -->
+            <text x="45" y="576" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#6E6C66">
+              <tspan fill="#002FA7" font-weight="700">★</tspan> 蓝色两层 = 本项目主要工作</text>
+          </svg>
+        </div>
+
+        <div class="s3-notes">
+          <div class="note">
+            <h4>为什么用 structured outputs</h4>
+            <p>LLM 单次调用,<span class="mono">plan</span> 字段用 <span class="mono">enum</span> 锁死可选动作。Ollama 传 JSON schema,GBNF 约束解码,格式 100% 合法 —— 不加约束时模型会吐散文,<span class="mono">json.loads</span> 崩溃。</p>
+          </div>
+          <div class="note">
+            <h4>约束解码只保证格式,不保证语义</h4>
+            <p>用户说一个不存在的地点,<span class="mono">enum</span> 会硬塞一个合法但错误的命令 —— 语义校验必须放在下游。</p>
+          </div>
+          <div class="note dashed">
+            <h4>关于那条虚线</h4>
+            <p>Verifier 能返回四种失败原因,但当前流向「中止任务」而非「重新规划」。<b style="color:var(--ink)">上行通路未接,是已知缺口,不是遗漏</b> —— 接上后才构成完整 agentic loop。</p>
+          </div>
+          <div class="foot" style="border-top:1px solid var(--hair);margin-top:.2em">
+            <p class="hw" style="margin:.6em 0 0">
+              <b>硬件</b> · Jetson · Ubuntu 20.04 · ROS Noetic · RPLidar A1 · 5-DOF 舵机臂 · 麦轮底盘 · <b>无轮式里程计</b>
+              <span style="display:block;margin-top:.3em;color:var(--faint)">最后一条是本项目多数困难的共同源头。</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4 · Grounding ★核心 ============ -->
+  <section class="slide" id="s4">
+    <div class="pad">
+      <div class="kicker"><span><b>Grounding ★</b> · 填平鸿沟</span><span class="idx">04 / 08</span></div>
+      <div class="core s4 grow" style="margin-top:clamp(10px,1.8vh,18px)">
+        <!-- 左:标题 + 弯路 + 转折 -->
+        <div class="left">
+          <h2 class="h1">导航停不准,<br>不是<span class="accent">导航</span>的问题</h2>
+          <p class="sub">用一个到达后的闭环对准环,填平 ±10 cm 与 6 cm 之间的鸿沟。</p>
+          <div class="detour">
+            <div class="d-h">✗ 走过的弯路 — 把导航做准,证伪了</div>
+            <p><span class="strike">收紧 yaw_goal_tolerance 让车到点转正</span> → 大角度旋转触发 hector 漂移,<b style="color:var(--red)">纯旋转位置滑了 0.42 m</b>,改回 3.14。</p>
+            <p><span class="strike">直接把罐当障碍绕</span> → 矮罐雷达看不见直接撞;高罐被 inflation 挡在外面够不到。<b style="color:var(--red)">这条路上没有解。</b></p>
+          </div>
+          <div class="grow"></div>
+          <div class="turn">关键一问:车的朝向<span class="accent">到底需不需要对?</span><br>
+            <span style="font-size:.66em;font-weight:400;color:var(--muted);line-height:1.4;display:block;margin-top:.5em">
+            不需要。grab 只关心罐在臂基座系的位置。麦轮 <span class="mono">linear.y</span> 纯平移就能把罐送进窗口 —— <b style="color:var(--ikb)">不转,就不漂。</b></span>
+          </div>
+        </div>
+
+        <!-- 右:Before/After + 大字报 -->
+        <div class="right">
+          <div class="ba">
+            <div class="ba-panel ba-panel--bad">
+              <div class="ba-head"><span>✗ 被否决</span><span>把不准的做准</span></div>
+              <div class="ba-body">
+                <svg viewBox="0 0 240 150" preserveAspectRatio="xMidYMid meet" aria-label="被否决方案:车在罐边旋转,漂移 0.42 米,罐子是障碍挡住路径">
+                  <!-- 罐(红=障碍) -->
+                  <circle cx="150" cy="70" r="15" fill="none" stroke="#D8261C" stroke-width="2"/>
+                  <line x1="140" y1="60" x2="160" y2="80" stroke="#D8261C" stroke-width="1.6"/>
+                  <line x1="160" y1="60" x2="140" y2="80" stroke="#D8261C" stroke-width="1.6"/>
+                  <text x="150" y="104" font-family="Helvetica,Arial" font-size="9" fill="#D8261C" text-anchor="middle">罐=障碍</text>
+                  <!-- 车 -->
+                  <rect x="60" y="55" width="30" height="30" fill="none" stroke="#6E6C66" stroke-width="2"/>
+                  <!-- 旋转弧 -->
+                  <path d="M96,50 A34,34 0 1 1 50,66" fill="none" stroke="#6E6C66" stroke-width="1.6"
+                        stroke-dasharray="4 3" marker-end="url(#down)"/>
+                  <text x="75" y="128" font-family="Helvetica,Arial" font-size="9.5" fill="#6E6C66" text-anchor="middle" font-weight="700">纯旋转</text>
+                  <text x="75" y="140" font-family="Helvetica,Arial" font-size="11" fill="#D8261C" text-anchor="middle" font-weight="800">Δ 0.42 m 漂移</text>
+                </svg>
+              </div>
+            </div>
+            <div class="ba-panel ba-panel--good">
+              <div class="ba-head"><span>✓ 采用</span><span>重新问什么需要准</span></div>
+              <div class="ba-body">
+                <svg viewBox="0 0 240 150" preserveAspectRatio="xMidYMid meet" aria-label="采用方案:车停在 standoff 点,纯横移 linear.y 把罐送到基座系 0.35,0,angular.z 为 0">
+                  <!-- 车 -->
+                  <rect x="30" y="55" width="30" height="30" fill="none" stroke="#002FA7" stroke-width="2"/>
+                  <!-- 罐(目标) -->
+                  <circle cx="185" cy="70" r="14" fill="#002FA7"/>
+                  <!-- 平移箭头 -->
+                  <line x1="66" y1="70" x2="165" y2="70" stroke="#002FA7" stroke-width="2" marker-end="url(#down)" transform="rotate(0)"/>
+                  <text x="112" y="60" font-family="Helvetica,Arial" font-size="10" fill="#002FA7" text-anchor="middle" font-weight="800" class="mono">linear.y</text>
+                  <!-- standoff 括号 -->
+                  <line x1="66" y1="98" x2="171" y2="98" stroke="#6E6C66" stroke-width="1"/>
+                  <line x1="66" y1="94" x2="66" y2="102" stroke="#6E6C66" stroke-width="1"/>
+                  <line x1="171" y1="94" x2="171" y2="102" stroke="#6E6C66" stroke-width="1"/>
+                  <text x="118" y="112" font-family="Helvetica,Arial" font-size="9" fill="#6E6C66" text-anchor="middle">standoff 0.6–0.8 m</text>
+                  <text x="185" y="132" font-family="Helvetica,Arial" font-size="9.5" fill="#002FA7" text-anchor="middle" font-weight="700" class="mono">(0.35, 0)</text>
+                  <text x="30" y="128" font-family="Helvetica,Arial" font-size="9" fill="#6E6C66" class="mono">angular.z = 0</text>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="dazi">
+            <div class="d hero">
+              <div class="stat-num num">10<span class="u">/11</span></div>
+              <div class="stat-lbl">逼近环收敛成功</div>
+            </div>
+            <div class="d">
+              <div class="stat-num num">0.42<span class="u"> m</span></div>
+              <div class="stat-lbl">旧方案纯旋转漂移量</div>
+            </div>
+            <div class="d">
+              <div class="stat-num num">1<span class="u"> 天</span></div>
+              <div class="stat-lbl">从问题定性到方案落地</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="foot">
+        <p class="small" style="margin:0"><b style="color:var(--ikb)">金句</b> —— 工程上最省力的解法,往往不是把不准的东西做准,而是重新问一遍「到底什么需要准」。<span style="color:var(--faint)"> 同轮顺带修掉 set_color 无限待命、深度失效静默吞掉两个 bug。</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5 · Verifier ★核心 ============ -->
+  <section class="slide" id="s5">
+    <div class="pad">
+      <div class="kicker"><span><b>Verifier ★</b> · 物理判据</span><span class="idx">05 / 08</span></div>
+      <div class="core s5 grow" style="margin-top:clamp(8px,1.4vh,16px)">
+        <div>
+          <h2 class="h1" style="display:inline">不问模型,<span class="accent">问舵机</span></h2>
+          <span class="sub" style="margin-left:1em">原来的程序不管抓没抓到,都告诉你「成功了」。抓空是 True,把罐撞飞也是 True —— 上层拿到的成功信号是假的。</span>
+        </div>
+
+        <div class="s5-mid">
+          <!-- 左:物理判据 大字报 63/250/418 -->
+          <div class="crit">
+            <div class="cap">改造二 · 物理判据 — 一个舵机读数,三态一刀切开</div>
+            <div class="row"><span class="n num">~63</span><span class="m">完全张开</span></div>
+            <div class="row hero"><span class="n num">~250</span><span class="m">夹住物体<span>成功捕获,判据落点</span></span></div>
+            <div class="row"><span class="n num">~418</span><span class="m">空夹<span>合到底了,没抓到</span></span></div>
+            <div class="cap" style="color:var(--ikb);text-transform:none;letter-spacing:.02em;font-weight:700;margin-top:.3em">
+              不经过视觉链路,也不经过语言模型 —— 相机、提示词、幻觉都骗不了它。错误才是不相关的。</div>
+          </div>
+
+          <!-- 右:Before/After -->
+          <div class="ba" style="grid-template-columns:1fr 1fr">
+            <div class="ba-panel ba-panel--bad">
+              <div class="ba-head"><span>改造前</span></div>
+              <div class="ba-body" style="display:flex;align-items:center">
+                <ul class="ba-list">
+                  <li>grab / place <b>永远返回 True</b></li>
+                  <li>抓空了 = True</li>
+                  <li>把罐撞飞 = True</li>
+                  <li>任务链条无法基于假信号决策</li>
+                </ul>
+              </div>
+            </div>
+            <div class="ba-panel ba-panel--good">
+              <div class="ba-head"><span>改造后</span></div>
+              <div class="ba-body" style="display:flex;align-items:center">
+                <ul class="ba-list">
+                  <li><b>阻塞返回真实结果</b></li>
+                  <li>四种失败各自明确 message</li>
+                  <li>舵机读数区间做判据</li>
+                  <li>正交物理量,不再被假 True 骗</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 三个排障案例 -->
+        <div class="cases">
+          <div class="case">
+            <div class="c-h">硬编码右偏 <span class="k">2 cm</span></div>
+            <p>四次全空夹,数值/IK/动作全对。现场肉眼「位置偏右」→ 翻出一个无条件右偏常数,删掉,当天连续成功。</p>
+          </div>
+          <div class="case">
+            <div class="c-h">绿色机身<span class="k">误检</span></div>
+            <p>底盘与雪碧罐同为绿色,选最大轮廓选中了车自己。屏蔽画面底部 30%,LAB 重标 a=102–116(旧 max 110 切掉半个罐)。</p>
+          </div>
+          <div class="case">
+            <div class="c-h">金属罐<span class="k">镜面盲区</span></div>
+            <p>正中心镜面反射,深度全 invalid。按半径逐级放大采样窗(r×0.3/0.5/0.7),凑够 ≥20 点取 median ≈ 355 mm。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 甜点区 + 页脚归属(小字,不省略) -->
+      <div class="foot" style="display:flex;justify-content:space-between;align-items:baseline;gap:1.5em;flex-wrap:wrap">
+        <span class="small"><b style="color:var(--ikb)">甜点区</b> 基座前方 <b class="mono" style="color:var(--ink)">0.33–0.38 m</b> 稳定抓取 · &gt;0.40 m 臂长不够 IK 无解 · &lt;0.31 m 伸臂撞翻罐子</span>
+        <span class="small" style="color:var(--faint);font-style:italic;max-width:52ch;text-align:right">抓取基础模块改自团队交接件;本文所述状态返回重构、物理判据标定、逼近环均为本人工作。</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 6 · 左右对照 ============ -->
+  <section class="slide" id="s6">
+    <div class="pad">
+      <div class="kicker"><span>Sim vs Real · 仿真里不存在的三层</span><span class="idx">06 / 08</span></div>
+      <div class="s6 grow" style="margin-top:clamp(10px,1.8vh,18px)">
+        <div class="cmp">
+          <div class="col sim">
+            <div class="col-h"><span>仿真环境</span><span class="t">LLaMAR · 全在语言空间互检</span></div>
+            <div class="rows">
+              <div class="r"><span class="role">Planner</span><span class="v">LLM 出子目标</span></div>
+              <div class="r"><span class="role">Actor</span><span class="v">LLM 选动作</span></div>
+              <div class="r key"><span class="role">Verifier</span><span class="v">LLM 读观测文本判断</span></div>
+              <div class="r key"><span class="role">Grounding</span><span class="v">不存在 · 引擎直接定义结果</span></div>
+            </div>
+          </div>
+          <div class="col real">
+            <div class="col-h"><span>本项目</span><span class="t">落到物理世界 · 测量而非定义</span></div>
+            <div class="rows">
+              <div class="r"><span class="role">Planner</span><span class="v">LLM 出子目标</span></div>
+              <div class="r"><span class="role">Actor</span><span class="v">LLM 选动作 → ROS 命令</span></div>
+              <div class="r key"><span class="role">Verifier</span><span class="v">舵机读数区间判定</span></div>
+              <div class="r key"><span class="role">Grounding</span><span class="v">逼近环</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="s6-note">
+          <div class="watershed">分水岭在<span class="accent">最后两行</span>:执行结果是被<b>测量</b>的,不是被<b>定义</b>的。</div>
+          <ul>
+            <li><b>硬编码右偏 2 cm</b> — 规划对、动作对,物理世界里手就是没到位</li>
+            <li><b>绿色机身误检</b> — 感知给出的坐标本身就错,而且「看起来很合理」</li>
+            <li><b>金属罐镜面无深度</b> — 传感器返回的不是错值,是<b>没有值</b></li>
+            <li style="color:var(--ink);list-style:none;margin-left:-1.1em;margin-top:.3em">这三个错误都不在语言空间里 —— 任何语言层角色都发现不了。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 7 · 边界与下一步 ============ -->
+  <section class="slide" id="s7">
+    <div class="pad">
+      <div class="kicker"><span>Limits &amp; Next · 边界与下一步</span><span class="idx">07 / 08</span></div>
+      <h2 class="h1" style="margin:clamp(8px,1.4vh,16px) 0 0">我知道这套系统<span class="accent">还差什么</span></h2>
+      <div class="s7 grow" style="margin-top:clamp(8px,1.4vh,16px)">
+        <div class="col">
+          <div class="eyebrow">当前能力边界</div>
+          <table class="limits">
+            <tr><td>目标物体</td><td>仅 red / green 两色,依赖预标定 LAB 阈值</td></tr>
+            <tr><td>抓取距离</td><td>0.33–0.38 m,超出则 IK 无解或撞翻</td></tr>
+            <tr><td>手眼标定</td><td>13.4° 倾斜未修(限制工作区,非当前瓶颈)</td></tr>
+            <tr><td>移动速度</td><td>0.08 m/s,受 hector 定位物理限制</td></tr>
+            <tr><td>障碍处理</td><td>recovery 已禁用,未建图障碍直接 ABORT</td></tr>
+            <tr><td>材质</td><td>透明瓶抓不了 —— 既无色块也无有效深度</td></tr>
+            <tr class="key"><td>语义闭环</td><td>上行通路未接,失败信息用于中止而非重规划</td></tr>
+          </table>
+        </div>
+        <div class="col">
+          <div class="bignum">
+            <div class="stat-num num">8<span class="u">/11</span></div>
+            <div>
+              <div class="stat-lbl" style="font-weight:700;color:var(--ink)">端到端成功</div>
+              <div class="stat-lbl">语义→导航→逼近→抓取 · 3 次失败:深度空洞 / 临界距离 IK 无解,<b style="color:var(--ink)">均可重试</b></div>
+            </div>
+          </div>
+          <div class="eyebrow" style="margin-top:.4em">下一步</div>
+          <ol class="steps">
+            <li>测距改从「落地点」取,根治反光深度空洞(半天,可离线验证)</li>
+            <li>重建地图,收敛到 0.35 m 后 <span class="mono">--nudge -0.08 0</span> 再录 standoff 点</li>
+            <li class="hero"><b>接上行通路</b>:Verifier 四种失败回流至 Translator,驱动重试而非中止</li>
+            <li>接回 <span class="mono">car_run.py</span>,跑完整端到端实验</li>
+          </ol>
+          <div class="foot" style="border-top:1px solid var(--hair)">
+            <p class="stack" style="margin:.6em 0 0"><b style="color:var(--ink)">根因 · 无轮式里程计</b> —— 旋转漂移、速度上限、定位不可靠都追溯到它。正面解法要换整个定位栈,项目周期内不划算,于是绕开 —— 而绕开它,恰好逼出了那个纯平移逼近环。</p>
+            <p class="stack" style="margin:.6em 0 0"><b style="color:var(--ink)">技术栈</b> · ROS Noetic · move_base/DWA · hector SLAM · OpenCV(LAB)· 深度相机 · 厂商 IK · Qwen-2.5/Ollama · Python</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 8 · 联系方式 ============ -->
+  <section class="slide" id="s8">
+    <div class="pad">
+      <div class="kicker"><span>Contact · 联系方式</span><span class="idx">08 / 08</span></div>
+      <div class="s8 grow">
+        <div>
+          <h2 class="big">想<span class="accent">聊聊?</span></h2>
+          <ul class="contact">
+            <li><span class="k">Email</span><span class="v">pingyuanwywh@gmail.com</span></li>
+            <li><span class="k">GitHub</span><span class="v ph">[ 待填写 ]</span></li>
+            <li><span class="k">LinkedIn</span><span class="v ph">[ 待填写 ]</span></li>
+            <li><span class="k">简历</span><span class="v ph">[ PDF 链接 ]</span></li>
+          </ul>
+          <p class="closing">正在寻找机器人 / 具身智能方向的全职机会 · 2026 年 12 月毕业。</p>
+        </div>
+        <div class="recap">
+          <div class="eyebrow">一句话记住这个项目</div>
+          <div class="step"><span class="n num">1</span>无人机给的位置只有<b>米级</b>,抓取需要<b>厘米级</b>。</div>
+          <div class="step"><span class="n num">2</span>我做了一个到达后的<b>视觉闭环平移对准</b>,填平了这个落差。</div>
+          <div class="step"><span class="n num">3</span>抓没抓到不靠模型判断,靠<b>夹爪舵机读数</b>。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- 固定导航 -->
+<button class="nav-arrow prev" id="prev" aria-label="上一屏">←</button>
+<button class="nav-arrow next" id="next" aria-label="下一屏">→</button>
+<div class="dots" id="dots" role="tablist" aria-label="翻页"></div>
+
+<script>
+(function(){
+  var deck = document.getElementById('deck');
+  var slides = Array.prototype.slice.call(deck.querySelectorAll('.slide'));
+  var n = slides.length;
+  var progress = document.getElementById('progress');
+  var dotsWrap = document.getElementById('dots');
+  var idx = 0, animating = false;
+
+  // 生成页码点
+  slides.forEach(function(s, i){
+    var b = document.createElement('button');
+    b.setAttribute('role','tab');
+    b.setAttribute('aria-label','第 ' + (i+1) + ' 屏');
+    b.innerHTML = '<span class="dot"></span>';
+    b.addEventListener('click', function(){ goTo(i); });
+    dotsWrap.appendChild(b);
+  });
+  var dots = Array.prototype.slice.call(dotsWrap.children);
+
+  function clamp(i){ return Math.max(0, Math.min(n-1, i)); }
+  function goTo(i){
+    i = clamp(i);
+    animating = true;
+    deck.scrollTo({ left: i * deck.clientWidth, behavior: 'smooth' });
+    setTimeout(function(){ animating = false; }, 420);
+  }
+  function next(){ goTo(idx + 1); }
+  function prev(){ goTo(idx - 1); }
+
+  function sync(){
+    var i = clamp(Math.round(deck.scrollLeft / deck.clientWidth));
+    if (i !== idx){ idx = i; }
+    progress.style.width = ((idx) / (n - 1) * 100) + '%';
+    dots.forEach(function(d, k){ d.setAttribute('aria-current', k === idx ? 'true' : 'false'); });
+  }
+  deck.addEventListener('scroll', function(){ window.requestAnimationFrame(sync); }, {passive:true});
+  window.addEventListener('resize', function(){ goTo(idx); });
+
+  document.getElementById('next').addEventListener('click', next);
+  document.getElementById('prev').addEventListener('click', prev);
+
+  // 键盘
+  window.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' '){ e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); prev(); }
+    else if (e.key === 'Home'){ e.preventDefault(); goTo(0); }
+    else if (e.key === 'End'){ e.preventDefault(); goTo(n-1); }
+  });
+
+  // 鼠标滚轮(纵向) → 横向翻页;触控板横向手势走原生 snap
+  var wheelLock = false;
+  deck.addEventListener('wheel', function(e){
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; // 横向手势交给原生
+    e.preventDefault();
+    if (wheelLock || animating) return;
+    if (Math.abs(e.deltaY) < 8) return;
+    wheelLock = true;
+    (e.deltaY > 0 ? next : prev)();
+    setTimeout(function(){ wheelLock = false; }, 480);
+  }, {passive:false});
+
+  sync();
+})();
+</script>
+</body>
+</html>
