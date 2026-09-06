@@ -58,8 +58,10 @@ bash ~/jetrover_up.sh           # 开工七步体检，不过就停，绝不动�
 `jetrover_up.sh` 把"连车 → 抓取栈 → cmd_vel 桥接 → 只读体检 →
 雷达 → 导航栈 → 清旧点"固化成带判据的七步，省掉跑完一整趟才发现白跑。
 
-依赖分层见 [`requirements.txt`](requirements.txt)；换电脑 / 换车 / 换机器人见
-**[`docs/PORTING.md`](docs/PORTING.md)**；录像怎么录、多机位怎么对齐、上帝视角怎么离线重渲染见
+分层设计、各模块的关键参数与实测数字、已知失败模式与处置见
+**[`docs/TECH_DESIGN.zh.md`](docs/TECH_DESIGN.zh.md)**；依赖分层见 [`requirements.txt`](requirements.txt)；
+换电脑 / 换车 / 换机器人见 **[`docs/PORTING.md`](docs/PORTING.md)**；
+录像怎么录、多机位怎么对齐、上帝视角怎么离线重渲染见
 **[`docs/VIDEO_PRODUCTION.md`](docs/VIDEO_PRODUCTION.md)**。
 
 ---

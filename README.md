@@ -218,6 +218,8 @@ an hour.
 
 Rover-side environment must export `MACHINE_TYPE=JetRover_Mecanum` explicitly.
 Dependencies are tiered in [`requirements.txt`](requirements.txt);
+the layered design, per-module parameters, measured numbers and known failure modes are written up
+in [`docs/TECH_DESIGN.zh.md`](docs/TECH_DESIGN.zh.md) (Chinese);
 porting to other hardware is documented in [`docs/PORTING.md`](docs/PORTING.md);
 how the demo videos are recorded, synchronised and re-rendered is in
 [`docs/VIDEO_PRODUCTION.md`](docs/VIDEO_PRODUCTION.md).
